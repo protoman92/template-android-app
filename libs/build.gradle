@@ -5,11 +5,11 @@ subprojects {
   project.apply from: "${rootDir}/constants.gradle"
 
   android {
-    compileSdk compileSdk
+    compileSdkVersion project.ext.compileSdk
 
     defaultConfig {
-      minSdkVersion minSdk
-      targetSdkVersion targetSdk
+      minSdkVersion project.ext.minSdk
+      targetSdkVersion project.ext.targetSdk
     }
   }
 }
