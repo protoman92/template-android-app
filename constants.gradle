@@ -1,0 +1,3 @@
+project.ext {
+  rxJava = "2.2.21"
+}
