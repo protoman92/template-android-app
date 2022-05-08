@@ -64,18 +64,18 @@ class MainFragment : Fragment(),
   //region IVetoableSubRouter
   override val subRouterPriority get() = this.uniqueID
 
-  override fun navigate(screen: IRouterScreen): Boolean {
+  override fun navigate(screen: IRouterScreen): NavigationResult {
     when (screen) {
       Redux.Screen.Back -> {
         if (this.reduxProp.state.clickCount > 1) {
           this.reduxProp.action.decrementClickCount()
-          return true
+          return NavigationResult.Break
         }
 
-        return false
+        return NavigationResult.Fallthrough
       }
       else -> {
-        return false
+        return NavigationResult.Fallthrough
       }
     }
   }

@@ -46,15 +46,15 @@ class MainActivity : AppCompatActivity(),
   //region IVetoableSubRouter
   override val subRouterPriority get() = this.uniqueID
 
-  override fun navigate(screen: IRouterScreen): Boolean {
+  override fun navigate(screen: IRouterScreen): NavigationResult {
     when (screen) {
       is Redux.Screen.Back -> {
         return if (this.supportFragmentManager.backStackEntryCount > 1) {
           this.supportFragmentManager.popBackStack()
-          true
+          NavigationResult.Break
         } else {
           this.finish()
-          true
+          NavigationResult.Break
         }
       }
 
@@ -64,13 +64,15 @@ class MainActivity : AppCompatActivity(),
           else -> null
         }
 
-        return fragment?.also {
+        fragment?.also {
           this.supportFragmentManager
             .beginTransaction()
             .replace(R.id.fragment, it)
             .addToBackStack(null)
             .commit()
-        } != null
+        }
+
+        return NavigationResult.Break
       }
     }
   }
