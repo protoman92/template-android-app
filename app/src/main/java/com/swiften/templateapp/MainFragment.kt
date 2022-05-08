@@ -22,41 +22,32 @@ class MainFragment : Fragment(),
     override fun mapAction(dispatch: IActionDispatcher, outProp: Unit): Action {
       return Action(
         registerSubRouter = { dispatch(NestedRouter.Screen.RegisterSubRouter(it)) },
-        unregisterSubRouter = { dispatch(NestedRouter.Screen.UnregisterSubRouter(it)) },
-        decrementClickCount = { dispatch(Redux.Action.MainFragment.DecrementClickCount) },
-        incrementClickCount = { dispatch(Redux.Action.MainFragment.IncrementClickCount) }
+        unregisterSubRouter = { dispatch(NestedRouter.Screen.UnregisterSubRouter(it)) }
       )
     }
 
     override fun mapState(state: Redux.State, outProp: Unit) = state.mainFragment
   }
 
-  data class State(val clickCount: Int = 0) : Serializable
+  data class State(val noop: Boolean = true) : Serializable
 
   class Action(
     val registerSubRouter: (IVetoableSubRouter) -> Unit,
-    val unregisterSubRouter: (IVetoableSubRouter) -> Unit,
-    val decrementClickCount: () -> Unit,
-    val incrementClickCount: () -> Unit
+    val unregisterSubRouter: (IVetoableSubRouter) -> Unit
   )
 
   override var reduxProp by ObservableReduxProp<State, Action> { _, next ->
     if (next.firstTime) {
       next.action.registerSubRouter(this)
     }
-
-    this.binding.incrementButton.text = next.state.clickCount.toString()
   }
 
   //region IPropLifecycleOwner
   override fun beforePropInjectionStarts(sp: StaticProp<Redux.State, Unit>) {
-    this.binding.incrementButton.setOnClickListener {
-      this.reduxProp.action.incrementClickCount()
-    }
+    this.binding.customWebview.loadUrl("https://www.google.com")
   }
 
   override fun afterPropInjectionEnds(sp: StaticProp<Redux.State, Unit>) {
-    this.binding.incrementButton.setOnClickListener(null)
     this.reduxProp.action.unregisterSubRouter(this)
   }
   //endregion
@@ -64,21 +55,7 @@ class MainFragment : Fragment(),
   //region IVetoableSubRouter
   override val subRouterPriority get() = this.uniqueID
 
-  override fun navigate(screen: IRouterScreen): NavigationResult {
-    when (screen) {
-      Redux.Screen.Back -> {
-        if (this.reduxProp.state.clickCount > 1) {
-          this.reduxProp.action.decrementClickCount()
-          return NavigationResult.Break
-        }
-
-        return NavigationResult.Fallthrough
-      }
-      else -> {
-        return NavigationResult.Fallthrough
-      }
-    }
-  }
+  override fun navigate(screen: IRouterScreen) = NavigationResult.Fallthrough
   //endregion
 
   private var _binding: MainFragmentBinding? = null

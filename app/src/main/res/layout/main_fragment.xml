@@ -5,10 +5,10 @@
   android:layout_width="match_parent"
   android:layout_height="match_parent">
 
-  <Button
-    android:id="@+id/increment_button"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+  <com.swiften.webview.CustomWebView
+    android:id="@+id/custom_webview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintLeft_toLeftOf="parent"
     app:layout_constraintRight_toRightOf="parent"
