@@ -44,7 +44,7 @@ class MainFragment : Fragment(),
 
   //region IPropLifecycleOwner
   override fun beforePropInjectionStarts(sp: StaticProp<Redux.State, Unit>) {
-    this.binding.customWebview.loadUrl("https://www.google.com")
+    this.binding.customWebview.loadUrl("file:///android_asset/index.html")
   }
 
   override fun afterPropInjectionEnds(sp: StaticProp<Redux.State, Unit>) {
