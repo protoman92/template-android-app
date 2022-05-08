@@ -1,6 +1,7 @@
 package com.swiften.templateapp
 
 import android.os.Bundle
+import android.webkit.WebViewFragment
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import org.swiften.redux.core.*

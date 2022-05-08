@@ -6,12 +6,12 @@ plugins {
 }
 
 android {
-  compileSdk 30
+  compileSdk compileSdk
 
   defaultConfig {
     applicationId "com.swiften.templateapp"
-    minSdk 21
-    targetSdk 30
+    minSdk minSdk
+    targetSdk targetSdk
     versionCode 1
     versionName "1.0"
 

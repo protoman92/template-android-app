@@ -1,0 +1,19 @@
+subprojects {
+  apply plugin: 'com.android.library'
+  apply plugin: 'kotlin-android'
+
+  project.apply from: "${rootDir}/constants.gradle"
+
+  android {
+    compileSdk compileSdk
+
+    defaultConfig {
+      minSdkVersion minSdk
+      targetSdkVersion targetSdk
+    }
+  }
+}
+
+project(':libs:webview') {
+  dependencies {}
+}
