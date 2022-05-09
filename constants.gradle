@@ -3,6 +3,7 @@ project.ext {
   minSdk = 21
   targetSdk = 30
 
+  gson = "2.9.0"
   kotlinRedux = "master-SNAPSHOT"
   rxJava = "2.2.21"
 }
