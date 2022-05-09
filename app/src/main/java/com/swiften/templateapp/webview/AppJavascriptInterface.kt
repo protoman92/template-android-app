@@ -25,8 +25,8 @@ class AppJavascriptInterface (
     val args = this.argsParser.parseArguments<CreateTestStreamArgs>(rawArgs)
 
     val stream = Observable
-      .interval(args.parameters.intervalMs, TimeUnit.MICROSECONDS)
-      .map { CreateTestStreamResult(progress = it) }
+      .interval(args.parameters.intervalMs, TimeUnit.MILLISECONDS)
+      .map { CreateTestStreamResult(progress = it + 1) }
       .take(100)
 
     this.requestProcessor.processStream(stream, args)

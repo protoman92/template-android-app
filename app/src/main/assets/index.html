@@ -40,15 +40,20 @@
       }
 
       function startStream() {
+        const line = document.querySelector(".line");
+        const progressIndicator = document.querySelector(".progress-indicator");
+
         invokeBridgeMethod("WrappedAppModule", "createTestStream", {
-          intervalMs: 200,
+          intervalMs: 100,
         }).subscribe({
           next: function (data) {
-            const progressIndicator = document.querySelector(
-              ".progress-indicator"
-            );
+            progressIndicator.style.transform =
+              "translate(" +
+              (line.clientWidth * data.result.progress) / 100 +
+              "px" +
+              ", -50%)";
 
-            progressIndicator.style.left = "" + data.result.progress + "%";
+            recordEvent("Progress " + data.result.progress);
           },
         });
       }
@@ -100,7 +105,7 @@
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        width: 3.2rem;
+        width: 1px;
       }
 
       #root .events {
