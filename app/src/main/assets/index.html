@@ -1,9 +1,61 @@
 <html>
   <head>
-    <script src="https://unpkg.com/@grabjs/mobile-kit-bridge-sdk@2.2.2"></script>
+    <script
+      src="https://unpkg.com/@grabjs/mobile-kit-bridge-sdk@2.2.2"
+      type="text/javascript"
+    ></script>
+
+    <script type="text/javascript">
+      window.onerror = function (event, source, lineno, colno, error) {
+        recordEvent(error.message);
+      };
+
+      const events = [];
+
+      function recordEvent(event) {
+        events.push(event);
+        const eventsContainer = document.querySelector("#root .events");
+        eventsContainer.innerHTML = "";
+
+        for (var i = 0; i < events.length; i += 1) {
+          const eventElement = document.createElement("span");
+          eventElement.innerHTML = events[i];
+          eventsContainer.appendChild(eventElement);
+        }
+
+        return true;
+      }
+
+      function invokeBridgeMethod(moduleName, methodName, methodArgs) {
+        recordEvent(
+          "Invoking " +
+            moduleName +
+            "." +
+            methodName +
+            " with " +
+            JSON.stringify(methodArgs)
+        );
+
+        window[moduleName]
+          .invoke(methodName, methodArgs)
+          .then(function (result) {
+            recordEvent("Received result " + JSON.stringify(result));
+          });
+      }
+
+      window.recordEvent = recordEvent;
+
+      setTimeout(function () {
+        recordEvent("Application initialized");
+      }, 0);
+
+      bridgeSDK.wrapModule(window, "AppModule");
+    </script>
 
     <style>
-      html, body, #root {
+      html,
+      body,
+      #root {
         height: 100%;
         width: 100%;
       }
@@ -11,13 +63,27 @@
       #root {
         align-items: center;
         display: flex;
+        flex-direction: column;
         justify-content: center;
+      }
+
+      #root .events {
+        display: flex;
+        flex-direction: column;
       }
     </style>
   </head>
   <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+
     <div id="root">
-      Hello world
+      <button
+        onclick="invokeBridgeMethod('WrappedAppModule', 'test', { a: 1 })"
+      >
+        Test AppModule
+      </button>
+
+      <div class="events"></div>
     </div>
   </body>
 </html>

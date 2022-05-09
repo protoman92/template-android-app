@@ -6,27 +6,33 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.swiften.templateapp.databinding.MainFragmentBinding
+import com.swiften.templateapp.webview.AppJavascriptInterface
+import com.swiften.templateapp.webview.JavascriptArgumentsParser
 import org.swiften.redux.core.*
 import org.swiften.redux.ui.*
 import java.io.Serializable
 
 class MainFragment : Fragment(),
-  IPropLifecycleOwner<Redux.State, Unit> by NoopPropLifecycleOwner(),
+  IPropLifecycleOwner<Redux.State, MainFragment.IDependency> by NoopPropLifecycleOwner(),
   ILoggable,
   IPropContainer<MainFragment.State, MainFragment.Action>,
   IUniqueIDProvider by DefaultUniqueIDProvider(),
   IVetoableSubRouter {
-  companion object : IPropMapper<Redux.State, Unit, State, Action> {
+  companion object : IPropMapper<Redux.State, IDependency, State, Action> {
     val DefaultState = State()
 
-    override fun mapAction(dispatch: IActionDispatcher, outProp: Unit): Action {
+    override fun mapAction(dispatch: IActionDispatcher, outProp: IDependency): Action {
       return Action(
         registerSubRouter = { dispatch(NestedRouter.Screen.RegisterSubRouter(it)) },
         unregisterSubRouter = { dispatch(NestedRouter.Screen.UnregisterSubRouter(it)) }
       )
     }
 
-    override fun mapState(state: Redux.State, outProp: Unit) = state.mainFragment
+    override fun mapState(state: Redux.State, outProp: IDependency) = state.mainFragment
+  }
+
+  interface IDependency {
+    val jsArgsParser: JavascriptArgumentsParser
   }
 
   data class State(val noop: Boolean = true) : Serializable
@@ -43,11 +49,17 @@ class MainFragment : Fragment(),
   }
 
   //region IPropLifecycleOwner
-  override fun beforePropInjectionStarts(sp: StaticProp<Redux.State, Unit>) {
-    this.binding.customWebview.loadUrl("file:///android_asset/index.html")
+  override fun beforePropInjectionStarts(sp: StaticProp<Redux.State, IDependency>) {
+    this.binding.customWebview.let {
+      it.javascriptInterfaces = arrayListOf(
+        AppJavascriptInterface(argsParser = sp.outProp.jsArgsParser)
+      )
+
+      it.loadUrl("file:///android_asset/index.html")
+    }
   }
 
-  override fun afterPropInjectionEnds(sp: StaticProp<Redux.State, Unit>) {
+  override fun afterPropInjectionEnds(sp: StaticProp<Redux.State, IDependency>) {
     this.reduxProp.action.unregisterSubRouter(this)
   }
   //endregion

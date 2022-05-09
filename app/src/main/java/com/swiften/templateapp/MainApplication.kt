@@ -2,6 +2,8 @@ package com.swiften.templateapp
 
 import android.app.Application
 import androidx.lifecycle.LifecycleOwner
+import com.google.gson.Gson
+import com.swiften.templateapp.webview.JavascriptArgumentsParser
 import org.swiften.redux.android.ui.AndroidPropInjector
 import org.swiften.redux.android.ui.lifecycle.ILifecycleInjectionHelper
 import org.swiften.redux.android.ui.lifecycle.injectActivityParcelable
@@ -24,6 +26,12 @@ class MainApplication : Application(),
     )(FinalStore(state = Redux.State(), reducer = Redux.Reducer))
 
     val injector = AndroidPropInjector(store = store)
+    val gson = Gson()
+    val jsArgsParser = JavascriptArgumentsParser(gson)
+
+    val dependency = object : IDependency {
+      override val jsArgsParser get() = jsArgsParser
+    }
 
     injector.injectActivityParcelable(
       application = this,
@@ -31,7 +39,7 @@ class MainApplication : Application(),
         override fun inject(injector: IPropInjector<Redux.State>, owner: LifecycleOwner) {
           when (owner) {
             is MainActivity -> injector.injectLifecycle(Unit, owner, MainActivity)
-            is MainFragment -> injector.injectLifecycle(Unit, owner, MainFragment)
+            is MainFragment -> injector.injectLifecycle(dependency, owner, MainFragment)
           }
         }
 
