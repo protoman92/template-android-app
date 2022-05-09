@@ -2,8 +2,10 @@ package com.swiften.webview
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Handler
 import android.util.AttributeSet
 import android.util.Log
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -11,8 +13,9 @@ import android.webkit.WebViewClient
 class CustomWebView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  defStyle: Int = 0
-) : WebView(context, attrs, defStyle) {
+  defStyle: Int = 0,
+) : WebView(context, attrs, defStyle),
+  IJavascriptEvaluator {
   var javascriptInterfaces: List<IJavascriptInterface> = arrayListOf()
     set(value) {
       if (field.isNotEmpty()) {
@@ -39,6 +42,15 @@ class CustomWebView @JvmOverloads constructor(
 
       it.webViewClient = object : WebViewClient() {}
     }
+  }
+
+  /** Ensure Javascript evaluation occurs on the main thread */
+  override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
+    val mainHandler = Handler(this.context.mainLooper);
+
+    mainHandler.post {
+      super.evaluateJavascript(script, resultCallback)
+    };
   }
 
   override fun onAttachedToWindow() {
