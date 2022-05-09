@@ -2,19 +2,33 @@ package com.swiften.templateapp.webview
 
 import android.webkit.JavascriptInterface
 import com.swiften.templateapp.ILoggable
+import com.swiften.webview.IBridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface
+import io.reactivex.Observable
+import java.util.concurrent.TimeUnit
 
-class AppJavascriptInterface (val argsParser: JavascriptArgumentsParser) : ILoggable,
+class AppJavascriptInterface (
+  val argsParser: JavascriptArgumentsParser,
+  val requestProcessor: IBridgeRequestProcessor,
+) : ILoggable,
   IJavascriptInterface {
-  data class TestArgs(val a: Int)
+  data class CreateTestStreamArgs(val intervalMs: Long)
+
+  data class CreateTestStreamResult(val progress: Long)
 
   //region IJavascriptInterface
   override val name get() = "AppModule"
   //endregion
 
   @JavascriptInterface
-  fun test(rawArgs: String) {
-    val args = this.argsParser.parseArguments<TestArgs>(rawArgs)
-    this.logI(args.parameters.toString())
+  fun createTestStream(rawArgs: String) {
+    val args = this.argsParser.parseArguments<CreateTestStreamArgs>(rawArgs)
+
+    val stream = Observable
+      .interval(args.parameters.intervalMs, TimeUnit.MICROSECONDS)
+      .map { CreateTestStreamResult(progress = it) }
+      .take(100)
+
+    this.requestProcessor.processStream(stream, args)
   }
 }

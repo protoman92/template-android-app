@@ -5,9 +5,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import com.google.gson.Gson
 import com.swiften.templateapp.databinding.MainFragmentBinding
 import com.swiften.templateapp.webview.AppJavascriptInterface
 import com.swiften.templateapp.webview.JavascriptArgumentsParser
+import com.swiften.webview.BridgeRequestProcessor
 import org.swiften.redux.core.*
 import org.swiften.redux.ui.*
 import java.io.Serializable
@@ -32,6 +34,7 @@ class MainFragment : Fragment(),
   }
 
   interface IDependency {
+    val gson: Gson
     val jsArgsParser: JavascriptArgumentsParser
   }
 
@@ -42,17 +45,29 @@ class MainFragment : Fragment(),
     val unregisterSubRouter: (IVetoableSubRouter) -> Unit
   )
 
+  lateinit var bridgeRequestProcessor: BridgeRequestProcessor
+
+  //region IPropContainer
   override var reduxProp by ObservableReduxProp<State, Action> { _, next ->
     if (next.firstTime) {
       next.action.registerSubRouter(this)
     }
   }
+  //endregion
 
   //region IPropLifecycleOwner
   override fun beforePropInjectionStarts(sp: StaticProp<Redux.State, IDependency>) {
+    bridgeRequestProcessor = BridgeRequestProcessor(
+      gson = sp.outProp.gson,
+      javascriptEvaluator = this.binding.customWebview
+    )
+
     this.binding.customWebview.let {
       it.javascriptInterfaces = arrayListOf(
-        AppJavascriptInterface(argsParser = sp.outProp.jsArgsParser)
+        AppJavascriptInterface(
+          argsParser = sp.outProp.jsArgsParser,
+          requestProcessor = bridgeRequestProcessor
+        )
       )
 
       it.loadUrl("file:///android_asset/index.html")
@@ -60,6 +75,7 @@ class MainFragment : Fragment(),
   }
 
   override fun afterPropInjectionEnds(sp: StaticProp<Redux.State, IDependency>) {
+    this.bridgeRequestProcessor.deinitialize()
     this.reduxProp.action.unregisterSubRouter(this)
   }
   //endregion

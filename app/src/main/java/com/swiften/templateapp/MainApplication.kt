@@ -30,6 +30,8 @@ class MainApplication : Application(),
     val jsArgsParser = JavascriptArgumentsParser(gson)
 
     val dependency = object : IDependency {
+      override val gson: Gson get() = gson
+
       override val jsArgsParser get() = jsArgsParser
     }
 

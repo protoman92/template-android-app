@@ -7,7 +7,7 @@
 
     <script type="text/javascript">
       window.onerror = function (event, source, lineno, colno, error) {
-        recordEvent(error.message);
+        recordEvent(event);
       };
 
       const events = [];
@@ -36,11 +36,21 @@
             JSON.stringify(methodArgs)
         );
 
-        window[moduleName]
-          .invoke(methodName, methodArgs)
-          .then(function (result) {
-            recordEvent("Received result " + JSON.stringify(result));
-          });
+        return window[moduleName].invoke(methodName, methodArgs);
+      }
+
+      function startStream() {
+        invokeBridgeMethod("WrappedAppModule", "createTestStream", {
+          intervalMs: 200,
+        }).subscribe({
+          next: function (data) {
+            const progressIndicator = document.querySelector(
+              ".progress-indicator"
+            );
+
+            progressIndicator.style.left = "" + data.result.progress + "%";
+          },
+        });
       }
 
       window.recordEvent = recordEvent;
@@ -53,6 +63,16 @@
     </script>
 
     <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        font-size: 62.5%;
+      }
+
       html,
       body,
       #root {
@@ -67,9 +87,44 @@
         justify-content: center;
       }
 
+      #root .line {
+        background-color: black;
+        height: 1px;
+        position: relative;
+        width: 50%;
+      }
+
+      #root .line .progress-indicator {
+        background-color: black;
+        height: 4.8rem;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3.2rem;
+      }
+
       #root .events {
+        align-items: center;
         display: flex;
         flex-direction: column;
+        font-size: 1.4rem;
+        max-width: 80%;
+      }
+
+      #root .events > * {
+        text-align: center;
+      }
+
+      #root > * {
+        margin-top: 0.8rem;
+      }
+
+      #root > *:first-child {
+        margin-top: 0;
+      }
+
+      #root button {
+        margin-top: 5.6rem;
       }
     </style>
   </head>
@@ -77,12 +132,11 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
 
     <div id="root">
-      <button
-        onclick="invokeBridgeMethod('WrappedAppModule', 'test', { a: 1 })"
-      >
-        Test AppModule
-      </button>
+      <div class="line">
+        <div class="progress-indicator"></div>
+      </div>
 
+      <button onclick="startStream()">Test value stream</button>
       <div class="events"></div>
     </div>
   </body>
