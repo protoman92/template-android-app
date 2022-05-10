@@ -1,5 +1,6 @@
 package com.swiften.templateapp
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,8 +9,9 @@ import androidx.fragment.app.Fragment
 import com.google.gson.Gson
 import com.swiften.templateapp.databinding.MainFragmentBinding
 import com.swiften.templateapp.webview.AppJavascriptInterface
-import com.swiften.templateapp.webview.JavascriptArgumentsParser
+import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
+import com.swiften.webview.SharedPreferencesJavascriptInterface
 import org.swiften.redux.core.*
 import org.swiften.redux.ui.*
 import java.io.Serializable
@@ -35,7 +37,8 @@ class MainFragment : Fragment(),
 
   interface IDependency {
     val gson: Gson
-    val jsArgsParser: JavascriptArgumentsParser
+    val jsArgsParser: BridgeMethodArgumentsParser
+    val sharedPreferences: SharedPreferences
   }
 
   data class State(val noop: Boolean = true) : Serializable
@@ -45,7 +48,7 @@ class MainFragment : Fragment(),
     val unregisterSubRouter: (IVetoableSubRouter) -> Unit
   )
 
-  lateinit var bridgeRequestProcessor: BridgeRequestProcessor
+  private lateinit var bridgeRequestProcessor: BridgeRequestProcessor
 
   //region IPropContainer
   override var reduxProp by ObservableReduxProp<State, Action> { _, next ->
@@ -66,8 +69,14 @@ class MainFragment : Fragment(),
       it.javascriptInterfaces = arrayListOf(
         AppJavascriptInterface(
           argsParser = sp.outProp.jsArgsParser,
-          requestProcessor = bridgeRequestProcessor
-        )
+          requestProcessor = bridgeRequestProcessor,
+        ),
+        SharedPreferencesJavascriptInterface(
+          name = "StorageModule",
+          argsParser = sp.outProp.jsArgsParser,
+          requestProcessor = bridgeRequestProcessor,
+          sharedPreferences = sp.outProp.sharedPreferences,
+        ),
       )
 
       it.loadUrl("file:///android_asset/index.html")
@@ -75,6 +84,7 @@ class MainFragment : Fragment(),
   }
 
   override fun afterPropInjectionEnds(sp: StaticProp<Redux.State, IDependency>) {
+    this.binding.customWebview.javascriptInterfaces = arrayListOf()
     this.bridgeRequestProcessor.deinitialize()
     this.reduxProp.action.unregisterSubRouter(this)
   }

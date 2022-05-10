@@ -1,9 +1,13 @@
 package com.swiften.templateapp
 
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.lifecycle.LifecycleOwner
+import androidx.preference.Preference
+import androidx.preference.PreferenceManager
 import com.google.gson.Gson
-import com.swiften.templateapp.webview.JavascriptArgumentsParser
+import com.swiften.webview.BridgeMethodArgumentsParser
 import org.swiften.redux.android.ui.AndroidPropInjector
 import org.swiften.redux.android.ui.lifecycle.ILifecycleInjectionHelper
 import org.swiften.redux.android.ui.lifecycle.injectActivityParcelable
@@ -27,12 +31,15 @@ class MainApplication : Application(),
 
     val injector = AndroidPropInjector(store = store)
     val gson = Gson()
-    val jsArgsParser = JavascriptArgumentsParser(gson)
+    val jsArgsParser = BridgeMethodArgumentsParser(gson)
+    val sharedPreferences = this.getSharedPreferences(this.applicationInfo.name, Context.MODE_PRIVATE)
 
     val dependency = object : IDependency {
       override val gson: Gson get() = gson
 
       override val jsArgsParser get() = jsArgsParser
+
+      override val sharedPreferences get() = sharedPreferences
     }
 
     injector.injectActivityParcelable(
