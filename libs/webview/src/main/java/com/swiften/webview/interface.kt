@@ -1,13 +1,29 @@
 package com.swiften.webview
 
 import android.webkit.ValueCallback
+import io.reactivex.Maybe
 import io.reactivex.Observable
+import io.reactivex.Single
 
 interface IBridgeRequestProcessor {
-  fun <Parameters, Result : Any> processStream(
+  fun <Parameters, Result> processStream(
     stream: Observable<Result>,
     bridgeArguments: BridgeMethodArguments<Parameters>
   )
+}
+
+fun <Parameters, Result> IBridgeRequestProcessor.processStream(
+  stream: Maybe<Result>,
+  bridgeArguments: BridgeMethodArguments<Parameters>,
+) {
+  return this.processStream(stream = stream.toObservable(), bridgeArguments = bridgeArguments)
+}
+
+fun <Parameters, Result> IBridgeRequestProcessor.processStream(
+  stream: Single<Result>,
+  bridgeArguments: BridgeMethodArguments<Parameters>,
+) {
+  return this.processStream(stream = stream.toObservable(), bridgeArguments = bridgeArguments)
 }
 
 interface IJavascriptEvaluator {

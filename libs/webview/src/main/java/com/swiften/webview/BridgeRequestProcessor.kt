@@ -2,13 +2,16 @@ package com.swiften.webview
 
 import com.google.gson.Gson
 import io.reactivex.Observable
+import io.reactivex.Scheduler
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.Semaphore
 
 class BridgeRequestProcessor(
   private val gson: Gson,
   private val javascriptEvaluator: IJavascriptEvaluator,
+  private val scheduler: Scheduler = Schedulers.computation()
 ) : IBridgeRequestProcessor {
   sealed class StreamEventResult(val event: String) {
     object Terminated : StreamEventResult(event = "STREAM_TERMINATED")
@@ -54,7 +57,7 @@ class BridgeRequestProcessor(
   }
 
   //region IBridgeRequestProcessor
-  override fun <Parameters, Result : Any> processStream(
+  override fun <Parameters, Result> processStream(
     stream: Observable<Result>,
     bridgeArguments: BridgeMethodArguments<Parameters>
   ) {
@@ -70,11 +73,13 @@ class BridgeRequestProcessor(
       }
     }
 
-    disposable = stream.subscribe(
-      { sendResultIfCallbackAvailable(it, null) },
-      { sendResultIfCallbackAvailable(null, it.message) },
-      { sendResultIfCallbackAvailable(StreamEventResult.Terminated, null) }
-    )
+    disposable = stream
+      .subscribeOn(this.scheduler)
+      .subscribe(
+        { sendResultIfCallbackAvailable(it, null) },
+        { sendResultIfCallbackAvailable(null, it.message) },
+        { sendResultIfCallbackAvailable(StreamEventResult.Terminated, null) }
+      )
 
     compositeDisposable.add(disposable)
   }

@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.util.AttributeSet
-import android.util.Log
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -18,8 +17,12 @@ class CustomWebView @JvmOverloads constructor(
   IJavascriptEvaluator {
   var javascriptInterfaces: List<IJavascriptInterface> = arrayListOf()
     set(value) {
-      if (field.isNotEmpty()) {
-        throw Exception("Cannot set Javascript interfaces more than once")
+      for (javascriptInterface in field) {
+        this.removeJavascriptInterface(javascriptInterface.name)
+      }
+
+      for (javascriptInterface in value) {
+        this.addJavascriptInterface(javascriptInterface, javascriptInterface.name)
       }
 
       field = value
@@ -50,22 +53,6 @@ class CustomWebView @JvmOverloads constructor(
 
     mainHandler.post {
       super.evaluateJavascript(script, resultCallback)
-    };
-  }
-
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
-
-    for (javascriptInterface in this.javascriptInterfaces) {
-      this.addJavascriptInterface(javascriptInterface, javascriptInterface.name)
-    }
-  }
-
-  override fun onDetachedFromWindow() {
-    super.onDetachedFromWindow()
-
-    for (javascriptInterface in this.javascriptInterfaces) {
-      this.removeJavascriptInterface(javascriptInterface.name)
     }
   }
 }
