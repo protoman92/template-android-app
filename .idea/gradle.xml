@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/libs" />
+            <option value="$PROJECT_DIR$/libs/commonview" />
             <option value="$PROJECT_DIR$/libs/webview" />
             <option value="$PROJECT_DIR$/libs/webview/javascriptinterface" />
             <option value="$PROJECT_DIR$/libs/webview/javascriptinterface/sharedpreferences" />

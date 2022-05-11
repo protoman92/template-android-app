@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="webview.loading_title">Please wait for a moment</string>
+</resources>

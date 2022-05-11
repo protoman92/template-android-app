@@ -1,6 +1,7 @@
 package com.swiften.webview
 
 import android.webkit.ValueCallback
+import android.webkit.WebView
 import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -32,6 +33,16 @@ interface IJavascriptEvaluator {
 
 interface IJavascriptInterface {
   val name: String
+}
+
+interface IWebView : IJavascriptEvaluator {
+  var javascriptInterfaces: List<IJavascriptInterface>
+
+  fun loadUrl(url: String)
+}
+
+interface IWebViewEventHook {
+  fun onPageFinished(view: WebView?, url: String?)
 }
 
 data class BridgeMethodArguments<Parameters>(

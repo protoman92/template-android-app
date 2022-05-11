@@ -14,20 +14,7 @@ class CustomWebView @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyle: Int = 0,
 ) : WebView(context, attrs, defStyle),
-  IJavascriptEvaluator {
-  var javascriptInterfaces: List<IJavascriptInterface> = arrayListOf()
-    set(value) {
-      for (javascriptInterface in field) {
-        this.removeJavascriptInterface(javascriptInterface.name)
-      }
-
-      for (javascriptInterface in value) {
-        this.addJavascriptInterface(javascriptInterface, javascriptInterface.name)
-      }
-
-      field = value
-    }
-
+  IWebView {
   init {
     this.let {
       it.settings.defaultTextEncodingName = "utf-8"
@@ -43,9 +30,23 @@ class CustomWebView @JvmOverloads constructor(
 
       it.webChromeClient = object : WebChromeClient() {}
 
-      it.webViewClient = object : WebViewClient() {}
+      it.webViewClient = object : WebViewClient() {
+        override fun onPageFinished(view: WebView?, url: String?) {
+          super.onPageFinished(view, url)
+
+          for (eventHook in this@CustomWebView.eventHooks) {
+            eventHook.onPageFinished(view, url)
+          }
+        }
+      }
     }
   }
+
+  /** Hook into webview events, since we are creating the web view client internally within this class */
+  private var eventHooks: MutableSet<IWebViewEventHook> = mutableSetOf()
+
+  //region IWebView
+  override var javascriptInterfaces: List<IJavascriptInterface> = arrayListOf()
 
   /** Ensure Javascript evaluation occurs on the main thread */
   override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
@@ -54,5 +55,30 @@ class CustomWebView @JvmOverloads constructor(
     mainHandler.post {
       super.evaluateJavascript(script, resultCallback)
     }
+  }
+  //endregion
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
+    for (javascriptInterface in this.javascriptInterfaces) {
+      this.addJavascriptInterface(javascriptInterface, javascriptInterface.name)
+    }
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+
+    for (javascriptInterface in this.javascriptInterfaces) {
+      this.removeJavascriptInterface(javascriptInterface.name)
+    }
+  }
+
+  fun addEventHook(hook: IWebViewEventHook) {
+    this.eventHooks.add(hook)
+  }
+
+  fun removeEventHook(hook: IWebViewEventHook) {
+    this.eventHooks.remove(hook)
   }
 }

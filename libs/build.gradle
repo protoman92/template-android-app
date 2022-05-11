@@ -2,7 +2,8 @@ subprojects {
   apply plugin: 'com.android.library'
   apply plugin: 'kotlin-android'
 
-  project.apply from: "${rootDir}/constants.gradle"
+  project.apply from: "$rootDir/constants.gradle"
+  project.apply from: "$rootDir/libs/constants.gradle"
 
   android {
     compileSdkVersion project.ext.compileSdk
@@ -20,7 +21,11 @@ subprojects {
 
 project(':libs:webview') {
   dependencies {
+    implementation "androidx.constraintlayout:constraintlayout:$project.ext.constraintLayout"
+    implementation "com.facebook.shimmer:shimmer:$project.ext.shimmer"
     implementation "com.google.code.gson:gson:$project.ext.gson"
+
+    implementation project(':libs:commonview')
   }
 }
 

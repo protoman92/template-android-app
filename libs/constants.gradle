@@ -1,0 +1,3 @@
+project.ext {
+  shimmer = '0.5.0'
+}
