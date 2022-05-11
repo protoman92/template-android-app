@@ -57,4 +57,5 @@ dependencies {
   implementation "io.reactivex.rxjava2:rxjava:$project.ext.rxJava"
 
   implementation project(':libs:webview')
+  implementation project(':libs:webview:javascriptinterface:sharedpreferences')
 }

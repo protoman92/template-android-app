@@ -1,7 +1,6 @@
 package com.swiften.templateapp
 
 import android.util.Log
-import com.google.gson.Gson
 
 interface IDependency : MainFragment.IDependency {}
 
