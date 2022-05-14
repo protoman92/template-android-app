@@ -8,6 +8,7 @@ dependencyResolutionManagement {
 }
 rootProject.name = "TemplateApp"
 include ':app'
+include ':app:webviewcentric'
 include ':libs:commonview'
 include ':libs:webview'
 include ':libs:webview:javascriptinterface:sharedpreferences'

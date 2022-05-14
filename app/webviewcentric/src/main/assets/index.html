@@ -1,0 +1,304 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://unpkg.com/@grabjs/mobile-kit-bridge-sdk@2.2.2"></script>
+
+    <script>
+      window.onerror = function (event, source, lineno, colno, error) {
+        recordEvent(event);
+      };
+
+      const events = [];
+
+      function recordEvent(event) {
+        events.push(event);
+        const eventsContainer = document.querySelector("#root .events");
+        eventsContainer.innerHTML = "";
+
+        for (var i = 0; i < events.length; i += 1) {
+          const eventElement = document.createElement("span");
+          eventElement.innerHTML = events[i];
+          eventsContainer.appendChild(eventElement);
+        }
+
+        return true;
+      }
+
+      function invokeBridgeMethod(moduleName, methodName, methodArgs) {
+        recordEvent(
+          "Invoking " +
+            moduleName +
+            "." +
+            methodName +
+            " with " +
+            JSON.stringify(methodArgs)
+        );
+
+        return window[moduleName].invoke(methodName, methodArgs);
+      }
+
+      const TEST_TYPE_STORAGE = "storage";
+      const TEST_TYPE_STREAM = "stream";
+
+      function toggleTest(type) {
+        var selector;
+
+        switch (type) {
+          case TEST_TYPE_STORAGE: {
+            selector = ".test-storage";
+            break;
+          }
+
+          case TEST_TYPE_STREAM: {
+            selector = ".test-stream";
+            break;
+          }
+        }
+
+        if (!selector) {
+          return;
+        }
+
+        const testContainers = document.querySelectorAll(".test-container");
+
+        for (var i = 0; i < testContainers.length; i += 1) {
+          testContainers[i].classList.remove("active");
+        }
+
+        document.querySelector(selector).classList.add("active");
+      }
+    </script>
+
+    <script>
+      function getValueFromStorage() {
+        const key = document.querySelector(
+          ".test-storage .get-container input"
+        ).value;
+
+        invokeBridgeMethod("WrappedStorageModule", "getString", {
+          key: key,
+        }).then(function (data) {
+          recordEvent("Got value " + data.result.value);
+        });
+      }
+
+      function observeValueFromStorage() {
+        const key = document.querySelector(
+          ".test-storage .observe-container input"
+        ).value;
+
+        invokeBridgeMethod("WrappedStorageModule", "observeString", {
+          key: key,
+        }).subscribe({
+          next: function (data) {
+            recordEvent(
+              "Observed value '" +
+                data.result.value +
+                "' set for key '" +
+                data.result.key +
+                "'"
+            );
+          },
+        });
+      }
+
+      function setValueInStorage() {
+        const key = document.querySelector(
+          ".test-storage .set-container input:nth-child(1)"
+        ).value;
+
+        const value = document.querySelector(
+          ".test-storage .set-container input:nth-child(2)"
+        ).value;
+
+        invokeBridgeMethod("WrappedStorageModule", "setString", {
+          key: key,
+          value: value,
+        }).then(function () {});
+      }
+    </script>
+
+    <script>
+      function startStream() {
+        const line = document.querySelector(".line");
+        const progressIndicator = document.querySelector(".progress-indicator");
+
+        invokeBridgeMethod("WrappedAppModule", "createTestStream", {
+          intervalMs: 100,
+        }).subscribe({
+          next: function (data) {
+            progressIndicator.style.transform =
+              "translate(" +
+              (line.clientWidth * data.result.progress) / 100 +
+              "px" +
+              ", -50%)";
+
+            recordEvent("Progress " + data.result.progress);
+          },
+        });
+      }
+    </script>
+
+    <script>
+      setTimeout(function () {
+        recordEvent("Application initialized");
+      }, 0);
+
+      bridgeSDK.wrapModule(window, "AppModule");
+      bridgeSDK.wrapModule(window, "StorageModule");
+    </script>
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        font-size: 62.5%;
+      }
+
+      html,
+      body,
+      #root {
+        height: 100vh;
+        width: 100vw;
+      }
+
+      #root {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      #root > * {
+        margin-top: 2.4rem;
+        max-width: 100%;
+      }
+
+      #root > *:first-child {
+        margin-top: 0;
+      }
+
+      #root > *.test-container:not(.active) {
+        display: none;
+      }
+
+      #root > *.test-container.active {
+        display: flex;
+      }
+
+      #root .controls > * {
+        margin-left: 0.8rem;
+      }
+
+      #root .controls > *:first-child {
+        margin-left: 0;
+      }
+
+      #root .events {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        font-size: 1.4rem;
+        max-width: 80%;
+      }
+
+      #root .events > * {
+        text-align: center;
+      }
+    </style>
+
+    <style>
+      .test-storage {
+        flex-direction: column;
+        max-width: 80%;
+        padding: 1.6rem;
+      }
+
+      .test-storage > * {
+        margin-top: 1.6rem;
+      }
+
+      .test-storage > *:first-child {
+        margin-top: 0;
+      }
+    </style>
+
+    <style>
+      .test-stream {
+        align-items: center;
+        flex-direction: column;
+        width: 50%;
+      }
+
+      .test-stream .line {
+        background-color: black;
+        height: 1px;
+        position: relative;
+        width: 100%;
+      }
+
+      .test-stream .progress-indicator {
+        background-color: black;
+        height: 4rem;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1px;
+      }
+
+      .test-stream > * {
+        margin-top: 0.8rem;
+      }
+
+      .test-stream > *:first-child {
+        margin-top: 0;
+      }
+
+      .test-stream button {
+        margin-top: 5.6rem;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <div id="root">
+      <div class="controls">
+        <button onclick="toggleTest(TEST_TYPE_STORAGE)">Test storage</button>
+        <button onclick="toggleTest(TEST_TYPE_STREAM)">Test stream</button>
+      </div>
+
+      <div class="test-container test-storage">
+        <div class="set-container">
+          <input placeholder="Key to set value" />
+          <input placeholder="Value to set" />
+          <button onclick="setValueInStorage()">Set value</button>
+        </div>
+
+        <div class="get-container">
+          <input placeholder="Key to get value" />
+          <button onclick="getValueFromStorage()">Get value</button>
+        </div>
+
+        <div class="observe-container">
+          <input placeholder="Key to observe value" />
+          <button onclick="observeValueFromStorage()">Observe value</button>
+        </div>
+      </div>
+
+      <div class="test-container test-stream">
+        <div class="line">
+          <div class="progress-indicator"></div>
+        </div>
+
+        <button onclick="startStream()">Test value stream</button>
+      </div>
+
+      <div class="events"></div>
+    </div>
+  </body>
+</html>
