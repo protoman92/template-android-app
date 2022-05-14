@@ -1,4 +1,4 @@
-package com.swiften.templateapp
+package com.swiften.templateapp.webviewcentric
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

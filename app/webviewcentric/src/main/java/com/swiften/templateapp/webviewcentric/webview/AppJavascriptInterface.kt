@@ -1,7 +1,7 @@
-package com.swiften.templateapp.webview
+package com.swiften.templateapp.webviewcentric.webview
 
 import android.webkit.JavascriptInterface
-import com.swiften.templateapp.ILoggable
+import com.swiften.templateapp.webviewcentric.ILoggable
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.IBridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface

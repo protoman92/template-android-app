@@ -1,4 +1,4 @@
-package com.swiften.templateapp
+package com.swiften.templateapp.webviewcentric
 
 import org.junit.Test
 

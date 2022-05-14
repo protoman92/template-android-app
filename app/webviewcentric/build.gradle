@@ -5,14 +5,18 @@ plugins {
   id "org.jetbrains.kotlin.plugin.parcelize"
 }
 
-def rootAbsolutePath = projectDir.parent
+def rootAbsolutePath = projectDir
+  .getParentFile()
+  .getParentFile()
+  .getAbsolutePath()
+
 project.apply from: "$rootAbsolutePath/constants.gradle"
 
 android {
   compileSdkVersion project.ext.compileSdk
 
   defaultConfig {
-    applicationId "com.swiften.templateapp"
+    applicationId "com.swiften.templateapp.webviewcentric"
     minSdk project.ext.minSdk
     targetSdk project.ext.targetSdk
     versionCode 1
@@ -39,7 +43,7 @@ android {
   kotlinOptions {
     jvmTarget = '1.8'
   }
-  namespace 'com.swiften.templateapp'
+  namespace 'com.swiften.templateapp.webviewcentric'
 }
 
 dependencies {

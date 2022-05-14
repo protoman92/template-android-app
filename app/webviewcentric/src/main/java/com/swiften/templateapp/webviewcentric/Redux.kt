@@ -1,4 +1,4 @@
-package com.swiften.templateapp
+package com.swiften.templateapp.webviewcentric
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize

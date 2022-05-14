@@ -1,11 +1,8 @@
-package com.swiften.templateapp
+package com.swiften.templateapp.webviewcentric
 
 import android.app.Application
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.lifecycle.LifecycleOwner
-import androidx.preference.Preference
-import androidx.preference.PreferenceManager
 import com.google.gson.Gson
 import com.swiften.webview.BridgeMethodArgumentsParser
 import org.swiften.redux.android.ui.AndroidPropInjector
