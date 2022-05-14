@@ -7,7 +7,7 @@ import android.util.AttributeSet
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebView
-import android.webkit.WebViewClient
+import androidx.webkit.WebViewClientCompat
 
 class CustomWebView @JvmOverloads constructor(
   context: Context,
@@ -30,7 +30,7 @@ class CustomWebView @JvmOverloads constructor(
 
       it.webChromeClient = object : WebChromeClient() {}
 
-      it.webViewClient = object : WebViewClient() {
+      it.webViewClient = object : WebViewClientCompat() {
         override fun onPageFinished(view: WebView?, url: String?) {
           super.onPageFinished(view, url)
 
