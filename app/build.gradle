@@ -5,7 +5,8 @@ plugins {
   id "org.jetbrains.kotlin.plugin.parcelize"
 }
 
-project.apply from: "$rootDir/constants.gradle"
+def rootAbsolutePath = projectDir.parent
+project.apply from: "$rootAbsolutePath/constants.gradle"
 
 android {
   compileSdkVersion project.ext.compileSdk

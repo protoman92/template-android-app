@@ -1,9 +1,11 @@
+def rootAbsolutePath = projectDir.parent
+
 subprojects {
   apply plugin: 'com.android.library'
   apply plugin: 'kotlin-android'
 
-  project.apply from: "$rootDir/constants.gradle"
-  project.apply from: "$rootDir/libs/constants.gradle"
+  project.apply from: "$rootAbsolutePath/constants.gradle"
+  project.apply from: "$rootAbsolutePath/libs/constants.gradle"
 
   android {
     compileSdkVersion project.ext.compileSdk
