@@ -5,10 +5,10 @@ import android.content.Context
 import androidx.lifecycle.LifecycleOwner
 import com.google.gson.Gson
 import com.swiften.webview.BridgeMethodArgumentsParser
+import org.swiften.redux.android.lifecycle.ILifecycleInjectionHelper
+import org.swiften.redux.android.lifecycle.injectActivityParcelable
+import org.swiften.redux.android.lifecycle.injectLifecycle
 import org.swiften.redux.android.ui.AndroidPropInjector
-import org.swiften.redux.android.ui.lifecycle.ILifecycleInjectionHelper
-import org.swiften.redux.android.ui.lifecycle.injectActivityParcelable
-import org.swiften.redux.android.ui.lifecycle.injectLifecycle
 import org.swiften.redux.core.FinalStore
 import org.swiften.redux.core.NestedRouter
 import org.swiften.redux.core.RouterMiddleware
