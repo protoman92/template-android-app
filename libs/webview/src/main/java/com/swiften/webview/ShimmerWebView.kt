@@ -2,12 +2,14 @@ package com.swiften.webview
 
 import android.animation.Animator
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.ValueCallback
 import android.webkit.WebView
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.facebook.shimmer.ShimmerFrameLayout
 import com.swiften.commonview.NoopAnimatorListener
 
 class ShimmerWebView @JvmOverloads constructor(
@@ -21,13 +23,14 @@ class ShimmerWebView @JvmOverloads constructor(
     internal const val DURATION_ANIMATION_MS = 200L
   }
 
-  private var loadingContainer: ViewGroup
+  private var loadingContainer: ShimmerFrameLayout
   private var webview: CustomWebView
 
   init {
     View.inflate(this.context, R.layout.shimmer_webview, this)
     this.loadingContainer = this.findViewById(R.id.loading_container)
     this.webview = this.findViewById(R.id.webview)
+    this.loadingContainer.stopShimmer()
   }
 
   //region IWebView
@@ -47,6 +50,10 @@ class ShimmerWebView @JvmOverloads constructor(
   //endregion
 
   //region IWebViewEventHook
+  override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+    this.loadingContainer.startShimmer()
+  }
+
   override fun onPageFinished(view: WebView?, url: String?) {
     view
       ?.animate()
@@ -65,7 +72,10 @@ class ShimmerWebView @JvmOverloads constructor(
       .setDuration(DURATION_ANIMATION_MS)
       .setListener(object : Animator.AnimatorListener by NoopAnimatorListener {
         override fun onAnimationEnd(anim: Animator?) {
-          this@ShimmerWebView.loadingContainer.visibility = View.GONE
+          this@ShimmerWebView.loadingContainer.also {
+            it.stopShimmer()
+            it.visibility = View.GONE
+          }
         }
       })
       .start()

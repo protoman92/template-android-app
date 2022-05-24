@@ -2,6 +2,7 @@ package com.swiften.webview
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Handler
 import android.util.AttributeSet
 import android.webkit.ValueCallback
@@ -31,11 +32,19 @@ class CustomWebView @JvmOverloads constructor(
       it.webChromeClient = object : WebChromeClient() {}
 
       it.webViewClient = object : WebViewClientCompat() {
+        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+          super.onPageStarted(view, url, favicon)
+
+          for (eventHook in this@CustomWebView.eventHooks) {
+            eventHook.onPageStarted(view = view, url = url, favicon = favicon)
+          }
+        }
+
         override fun onPageFinished(view: WebView?, url: String?) {
           super.onPageFinished(view, url)
 
           for (eventHook in this@CustomWebView.eventHooks) {
-            eventHook.onPageFinished(view, url)
+            eventHook.onPageFinished(view = view, url = url)
           }
         }
       }

@@ -13,6 +13,7 @@ def rootAbsolutePath = projectDir
 project.apply from: "$rootAbsolutePath/constants.gradle"
 
 android {
+  namespace 'com.swiften.templateapp.webviewcentric'
   compileSdkVersion project.ext.compileSdk
 
   defaultConfig {
@@ -43,7 +44,6 @@ android {
   kotlinOptions {
     jvmTarget = '1.8'
   }
-  namespace 'com.swiften.templateapp.webviewcentric'
 }
 
 dependencies {

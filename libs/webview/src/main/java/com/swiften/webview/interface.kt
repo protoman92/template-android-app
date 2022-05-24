@@ -1,5 +1,6 @@
 package com.swiften.webview
 
+import android.graphics.Bitmap
 import android.webkit.ValueCallback
 import android.webkit.WebView
 import io.reactivex.Maybe
@@ -42,6 +43,8 @@ interface IWebView : IJavascriptEvaluator {
 }
 
 interface IWebViewEventHook {
+  fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?)
+
   fun onPageFinished(view: WebView?, url: String?)
 }
 
