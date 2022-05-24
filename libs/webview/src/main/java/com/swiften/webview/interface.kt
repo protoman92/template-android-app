@@ -3,13 +3,15 @@ package com.swiften.webview
 import android.graphics.Bitmap
 import android.webkit.ValueCallback
 import android.webkit.WebView
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
 import io.reactivex.Maybe
 import io.reactivex.Observable
 import io.reactivex.Single
 
 interface IBridgeRequestProcessor {
   fun <Parameters, Result> processStream(
-    stream: Observable<Result>,
+    stream: Flowable<Result>,
     bridgeArguments: BridgeMethodArguments<Parameters>
   )
 }
@@ -18,14 +20,24 @@ fun <Parameters, Result> IBridgeRequestProcessor.processStream(
   stream: Maybe<Result>,
   bridgeArguments: BridgeMethodArguments<Parameters>,
 ) {
-  return this.processStream(stream = stream.toObservable(), bridgeArguments = bridgeArguments)
+  return this.processStream(stream = stream.toFlowable(), bridgeArguments = bridgeArguments)
+}
+
+fun <Parameters, Result> IBridgeRequestProcessor.processStream(
+  stream: Observable<Result>,
+  bridgeArguments: BridgeMethodArguments<Parameters>,
+) {
+  return this.processStream(
+    stream = stream.toFlowable(BackpressureStrategy.BUFFER),
+    bridgeArguments = bridgeArguments,
+  )
 }
 
 fun <Parameters, Result> IBridgeRequestProcessor.processStream(
   stream: Single<Result>,
   bridgeArguments: BridgeMethodArguments<Parameters>,
 ) {
-  return this.processStream(stream = stream.toObservable(), bridgeArguments = bridgeArguments)
+  return this.processStream(stream = stream.toFlowable(), bridgeArguments = bridgeArguments)
 }
 
 interface IJavascriptEvaluator {

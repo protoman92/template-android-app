@@ -6,7 +6,7 @@ import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.IBridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
-import io.reactivex.Observable
+import io.reactivex.Flowable
 import java.util.concurrent.TimeUnit
 
 class AppJavascriptInterface (
@@ -26,7 +26,7 @@ class AppJavascriptInterface (
   fun createTestStream(rawArgs: String) {
     val args = this.argsParser.parseArguments<CreateTestStreamArgs>(rawArgs = rawArgs)
 
-    val stream = Observable
+    val stream = Flowable
       .interval(args.parameters.intervalMs, TimeUnit.MILLISECONDS)
       .map { CreateTestStreamResult(progress = it + 1) }
       .take(100)

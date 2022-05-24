@@ -1,7 +1,7 @@
 package com.swiften.webview
 
 import com.google.gson.Gson
-import io.reactivex.Observable
+import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
@@ -58,7 +58,7 @@ class BridgeRequestProcessor(
 
   //region IBridgeRequestProcessor
   override fun <Parameters, Result> processStream(
-    stream: Observable<Result>,
+    stream: Flowable<Result>,
     bridgeArguments: BridgeMethodArguments<Parameters>
   ) {
     var disposable: Disposable? = null
