@@ -37,10 +37,11 @@ class BridgeRequestProcessor(
     var result = false
 
     this.ensureSynchronous { done ->
-      this.javascriptEvaluator.evaluateJavascript("javascript:window.$callback != null") {
-        result = it == "true"
-        done()
-      }
+      this.javascriptEvaluator
+        .evaluateJavascript(script = """javascript:typeof window.$callback == "function"""") {
+          result = it == "true"
+          done()
+        }
     }
 
     return result
@@ -50,9 +51,12 @@ class BridgeRequestProcessor(
     this.ensureSynchronous { done ->
       val jsonResponse = this.gson.toJson(response)
 
-      this.javascriptEvaluator.evaluateJavascript("javascript:window.$callback($jsonResponse)") {
-        done()
-      }
+      val scriptToExecute = arrayListOf(
+        """if (typeof window.$callback !== "function") {throw new Error("window.$callback does not exist") }""",
+        "window.$callback($jsonResponse)"
+      ).joinToString(";")
+
+      this.javascriptEvaluator.evaluateJavascript(script = "javascript:$scriptToExecute") { done() }
     }
   }
 
@@ -67,7 +71,10 @@ class BridgeRequestProcessor(
       val isCallbackAvailable = this.checkCallbackAvailable(callback = bridgeArguments.callback)
 
       if (isCallbackAvailable) {
-        this.sendResponseToCallback(bridgeArguments.callback, StreamResponse(result = result, error = error))
+        this.sendResponseToCallback(
+          callback = bridgeArguments.callback,
+          response = StreamResponse(result = result, error = error)
+        )
       } else {
         disposable?.dispose()
       }
