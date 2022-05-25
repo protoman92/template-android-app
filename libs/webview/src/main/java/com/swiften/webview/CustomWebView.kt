@@ -15,7 +15,8 @@ class CustomWebView @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyle: Int = 0,
 ) : WebView(context, attrs, defStyle),
-  IWebView {
+  IWebView
+{
   init {
     this.let {
       it.settings.defaultTextEncodingName = "utf-8"
@@ -60,10 +61,19 @@ class CustomWebView @JvmOverloads constructor(
   /** Ensure Javascript evaluation occurs on the main thread */
   override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
     val mainHandler = Handler(this.context.mainLooper);
+    mainHandler.post { super.evaluateJavascript(script, resultCallback) }
+  }
 
-    mainHandler.post {
-      super.evaluateJavascript(script, resultCallback)
-    }
+  /** Ensure goBack happens on the main thread */
+  override fun goBack() {
+    val mainHandler = Handler(this.context.mainLooper);
+    mainHandler.post { super.goBack() }
+  }
+
+  /** Ensure reload happens on the main thread */
+  override fun reload() {
+    val mainHandler = Handler(this.context.mainLooper);
+    mainHandler.post { super.reload() }
   }
   //endregion
 

@@ -51,7 +51,13 @@ interface IJavascriptInterface {
 interface IWebView : IJavascriptEvaluator {
   var javascriptInterfaces: List<IJavascriptInterface>
 
+  fun canGoBack(): Boolean
+
+  fun goBack()
+
   fun loadUrl(url: String)
+
+  fun reload()
 }
 
 interface IWebViewEventHook {

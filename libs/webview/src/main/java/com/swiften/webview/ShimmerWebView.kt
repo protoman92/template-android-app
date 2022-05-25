@@ -40,12 +40,24 @@ class ShimmerWebView @JvmOverloads constructor(
       this.webview.javascriptInterfaces = value
     }
 
+  override fun canGoBack(): Boolean {
+    return this.webview.canGoBack()
+  }
+
   override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
     this.webview.evaluateJavascript(script = script, resultCallback = resultCallback)
   }
 
+  override fun goBack() {
+    this.webview.goBack()
+  }
+
   override fun loadUrl(url: String) {
     this.webview.loadUrl(url)
+  }
+
+  override fun reload() {
+    this.webview.reload()
   }
   //endregion
 
