@@ -21,7 +21,8 @@ class MainFragment : Fragment(),
   ILoggable,
   IPropContainer<MainFragment.State, MainFragment.Action>,
   IUniqueIDProvider by DefaultUniqueIDProvider(),
-  IVetoableSubRouter {
+  IVetoableSubRouter
+{
   companion object : IPropMapper<Redux.State, IDependency, State, Action> {
     val DefaultState = State()
 
@@ -93,7 +94,19 @@ class MainFragment : Fragment(),
   //region IVetoableSubRouter
   override val subRouterPriority get() = this.uniqueID
 
-  override fun navigate(screen: IRouterScreen) = NavigationResult.Fallthrough
+  override fun navigate(screen: IRouterScreen): NavigationResult {
+    return when (screen) {
+      Redux.Screen.Back -> {
+        if (this.binding.customWebview.canGoBack()) {
+          this.binding.customWebview.goBack()
+          return NavigationResult.Break
+        }
+
+        NavigationResult.Fallthrough
+      }
+      else -> NavigationResult.Fallthrough
+    }
+  }
   //endregion
 
   private var _binding: MainFragmentBinding? = null
