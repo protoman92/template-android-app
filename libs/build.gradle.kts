@@ -50,6 +50,7 @@ subprojects {
   dependencies {
     val implementation by configurations
     implementation("io.reactivex.rxjava2:rxjava:${project.extra["rxJava"]}")
+    implementation("io.reactivex.rxjava2:rxandroid:${project.extra["rxAndroid"]}")
   }
 }
 
@@ -64,6 +65,17 @@ configure(arrayListOf(
     implementation("com.google.code.gson:gson:${project.extra["gson"]}")
 
     implementation(project(":libs:commonview"))
+  }
+}
+
+configure(arrayListOf(
+  project(":libs:webview:javascriptinterface:notification")
+)) {
+  dependencies {
+    val implementation by configurations
+    implementation("com.google.android.material:material:${project.extra["material"]}")
+
+    implementation(project(":libs:webview"))
   }
 }
 

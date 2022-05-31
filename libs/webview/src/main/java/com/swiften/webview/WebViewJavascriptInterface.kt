@@ -7,7 +7,7 @@ class WebViewJavascriptInterface(
   override val name: String,
   private val argsParser: BridgeMethodArgumentsParser,
   private val requestProcessor: IBridgeRequestProcessor,
-  private val webView: IWebView
+  private val webView: IWebView,
 ) : IJavascriptInterface {
   @JavascriptInterface
   fun goBack(rawRequest: String) {
