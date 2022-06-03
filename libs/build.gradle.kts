@@ -55,6 +55,15 @@ subprojects {
 }
 
 configure(arrayListOf(
+  project(":libs:commonview")
+)) {
+  dependencies {
+    val implementation by configurations
+    implementation("androidx.fragment:fragment-ktx:${project.extra["fragmentKtx"]}")
+  }
+}
+
+configure(arrayListOf(
   project(":libs:webview")
 )) {
   dependencies {
