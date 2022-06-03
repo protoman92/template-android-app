@@ -1,6 +1,8 @@
 package com.swiften.webview
 
 import android.webkit.JavascriptInterface
+import com.swiften.commonview.IGenericLifecycleOwner
+import com.swiften.commonview.NoopGenericLifecycleOwner
 import io.reactivex.Single
 
 class WebViewJavascriptInterface(
@@ -8,7 +10,9 @@ class WebViewJavascriptInterface(
   private val argsParser: BridgeMethodArgumentsParser,
   private val requestProcessor: IBridgeRequestProcessor,
   private val webView: IWebView,
-) : IJavascriptInterface {
+) : IJavascriptInterface,
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+{
   @JavascriptInterface
   fun goBack(rawRequest: String) {
     val request = argsParser.parseArguments<Unit>(rawRequest)

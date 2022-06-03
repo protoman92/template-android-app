@@ -3,7 +3,9 @@ package com.swiften.webview
 import android.graphics.Bitmap
 import android.webkit.ValueCallback
 import android.webkit.WebView
+import com.swiften.commonview.IGenericLifecycleOwner
 import io.reactivex.BackpressureStrategy
+import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Maybe
 import io.reactivex.Observable
@@ -14,6 +16,13 @@ interface IBridgeRequestProcessor {
     stream: Flowable<Result>,
     bridgeArguments: BridgeMethodArguments<Parameters>
   )
+}
+
+fun <Parameters> IBridgeRequestProcessor.processStream(
+  stream: Completable,
+  bridgeArguments: BridgeMethodArguments<Parameters>,
+) {
+  return this.processStream(stream = stream.toFlowable<Unit>(), bridgeArguments = bridgeArguments)
 }
 
 fun <Parameters, Result> IBridgeRequestProcessor.processStream(
@@ -44,11 +53,11 @@ interface IJavascriptEvaluator {
   fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?)
 }
 
-interface IJavascriptInterface {
+interface IJavascriptInterface : IGenericLifecycleOwner {
   val name: String
 }
 
-interface IWebView : IJavascriptEvaluator {
+interface IWebView : IGenericLifecycleOwner, IJavascriptEvaluator {
   var javascriptInterfaces: List<IJavascriptInterface>
 
   fun canGoBack(): Boolean

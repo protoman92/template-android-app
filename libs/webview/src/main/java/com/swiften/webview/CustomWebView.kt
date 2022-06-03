@@ -55,6 +55,22 @@ class CustomWebView @JvmOverloads constructor(
   /** Hook into webview events, since we are creating the web view client internally within this class */
   private var eventHooks: MutableSet<IWebViewEventHook> = mutableSetOf()
 
+  //region IGenericLifecycleOwner
+  override fun initialize() {
+    for (javascriptInterface in this.javascriptInterfaces) {
+      this.addJavascriptInterface(javascriptInterface, javascriptInterface.name)
+      javascriptInterface.initialize()
+    }
+  }
+
+  override fun deinitialize() {
+    for (javascriptInterface in this.javascriptInterfaces) {
+      javascriptInterface.deinitialize()
+      this.removeJavascriptInterface(javascriptInterface.name)
+    }
+  }
+  //endregion
+
   //region IWebView
   override var javascriptInterfaces: List<IJavascriptInterface> = arrayListOf()
 
@@ -76,22 +92,6 @@ class CustomWebView @JvmOverloads constructor(
     mainHandler.post { super.reload() }
   }
   //endregion
-
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
-
-    for (javascriptInterface in this.javascriptInterfaces) {
-      this.addJavascriptInterface(javascriptInterface, javascriptInterface.name)
-    }
-  }
-
-  override fun onDetachedFromWindow() {
-    super.onDetachedFromWindow()
-
-    for (javascriptInterface in this.javascriptInterfaces) {
-      this.removeJavascriptInterface(javascriptInterface.name)
-    }
-  }
 
   fun addEventHook(hook: IWebViewEventHook) {
     this.eventHooks.add(hook)

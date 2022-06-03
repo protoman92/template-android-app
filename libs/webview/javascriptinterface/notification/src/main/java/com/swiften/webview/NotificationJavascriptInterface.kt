@@ -6,6 +6,9 @@ import android.view.View
 import android.webkit.JavascriptInterface
 import android.widget.TextView
 import com.google.android.material.snackbar.Snackbar
+import com.swiften.commonview.IGenericLifecycleOwner
+import com.swiften.commonview.NoopGenericLifecycleOwner
+import io.reactivex.Completable
 import io.reactivex.Single
 
 class NotificationJavascriptInterface(
@@ -13,7 +16,9 @@ class NotificationJavascriptInterface(
   private val argsParser: BridgeMethodArgumentsParser,
   private val parentView: View,
   private val requestProcessor: IBridgeRequestProcessor
-) : IJavascriptInterface {
+) : IJavascriptInterface,
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+{
   sealed class MethodArguments {
     data class ShowNotification(
       val durationMs: Int,
@@ -26,9 +31,9 @@ class NotificationJavascriptInterface(
     val args = this.argsParser.parseArguments<MethodArguments.ShowNotification>(rawArgs = rawArgs)
 
     this.requestProcessor.processStream(
-      stream = Single.defer {
+      stream = Completable.defer {
         this@NotificationJavascriptInterface.showNotificationOnMainThread(args.parameters)
-        Single.just(Unit)
+        Completable.complete()
       },
       bridgeArguments = args,
     )

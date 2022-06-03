@@ -2,6 +2,8 @@ package com.swiften.webview
 
 import android.content.SharedPreferences
 import android.webkit.JavascriptInterface
+import com.swiften.commonview.IGenericLifecycleOwner
+import com.swiften.commonview.NoopGenericLifecycleOwner
 import io.reactivex.Single
 import io.reactivex.subjects.BehaviorSubject
 import java.lang.Exception
@@ -11,7 +13,9 @@ class SharedPreferencesJavascriptInterface(
   private val argsParser: BridgeMethodArgumentsParser,
   private val requestProcessor: IBridgeRequestProcessor,
   private val sharedPreferences: SharedPreferences,
-) : IJavascriptInterface {
+) : IJavascriptInterface,
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+{
   sealed class MethodArguments {
     data class GetString(val key: String) : MethodArguments()
 

@@ -1,6 +1,8 @@
 package com.swiften.webview
 
 import com.google.gson.Gson
+import com.swiften.commonview.IGenericLifecycleOwner
+import com.swiften.commonview.NoopGenericLifecycleOwner
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.disposables.CompositeDisposable
@@ -12,7 +14,9 @@ class BridgeRequestProcessor(
   private val gson: Gson,
   private val javascriptEvaluator: IJavascriptEvaluator,
   private val scheduler: Scheduler = Schedulers.computation()
-) : IBridgeRequestProcessor {
+) : IBridgeRequestProcessor,
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+{
   sealed class StreamEventResult(val event: String) {
     object Terminated : StreamEventResult(event = "STREAM_TERMINATED")
   }
@@ -92,7 +96,9 @@ class BridgeRequestProcessor(
   }
   //endregion
 
-  fun deinitialize() {
+  //region IGenericLifecycleOwner
+  override fun deinitialize() {
     this.compositeDisposable.dispose()
   }
+  //endregion
 }

@@ -5,12 +5,11 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.AttributeSet
 import android.view.View
-import android.view.ViewGroup
 import android.webkit.ValueCallback
 import android.webkit.WebView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.facebook.shimmer.ShimmerFrameLayout
-import com.swiften.commonview.NoopAnimatorListener
+import com.swiften.commonview.animation.NoopAnimatorListener
 
 class ShimmerWebView @JvmOverloads constructor(
   context: Context,
@@ -32,6 +31,16 @@ class ShimmerWebView @JvmOverloads constructor(
     this.webview = this.findViewById(R.id.webview)
     this.loadingContainer.stopShimmer()
   }
+
+  //region IGenericLifecycleOwner
+  override fun initialize() {
+    this.webview.initialize()
+  }
+
+  override fun deinitialize() {
+    this.webview.deinitialize()
+  }
+  //endregion
 
   //region IWebView
   override var javascriptInterfaces: List<IJavascriptInterface>

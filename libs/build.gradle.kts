@@ -75,6 +75,7 @@ configure(arrayListOf(
     val implementation by configurations
     implementation("com.google.android.material:material:${project.extra["material"]}")
 
+    implementation(project(":libs:commonview"))
     implementation(project(":libs:webview"))
   }
 }
@@ -86,6 +87,7 @@ configure(arrayListOf(
     val implementation by configurations
     implementation("com.google.code.gson:gson:${project.extra["gson"]}")
 
+    implementation(project(":libs:commonview"))
     implementation(project(":libs:webview"))
   }
 }

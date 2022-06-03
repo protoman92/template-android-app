@@ -1,4 +1,4 @@
-package com.swiften.commonview
+package com.swiften.commonview.animation
 
 import android.animation.Animator
 

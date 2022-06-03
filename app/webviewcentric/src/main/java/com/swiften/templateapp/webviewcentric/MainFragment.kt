@@ -29,7 +29,7 @@ class MainFragment : Fragment(),
     override fun mapAction(dispatch: IActionDispatcher, outProp: IDependency): Action {
       return Action(
         registerSubRouter = { dispatch(NestedRouter.Screen.RegisterSubRouter(it)) },
-        unregisterSubRouter = { dispatch(NestedRouter.Screen.UnregisterSubRouter(it)) }
+        unregisterSubRouter = { dispatch(NestedRouter.Screen.UnregisterSubRouter(it)) },
       )
     }
 
@@ -80,12 +80,13 @@ class MainFragment : Fragment(),
         ),
       )
 
+      this.binding.customWebview.initialize()
       it.loadUrl("file:///android_asset/index.html")
     }
   }
 
   override fun afterPropInjectionEnds(sp: StaticProp<Redux.State, IDependency>) {
-    this.binding.customWebview.javascriptInterfaces = arrayListOf()
+    this.binding.customWebview.deinitialize()
     this.bridgeRequestProcessor.deinitialize()
     this.reduxProp.action.unregisterSubRouter(this)
   }
