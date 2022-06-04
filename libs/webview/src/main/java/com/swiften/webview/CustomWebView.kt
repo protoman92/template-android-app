@@ -48,6 +48,14 @@ class CustomWebView @JvmOverloads constructor(
             eventHook.onPageFinished(view = view, url = url)
           }
         }
+
+        override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+          super.doUpdateVisitedHistory(view, url, isReload)
+
+          for (eventHook in this@CustomWebView.eventHooks) {
+            eventHook.doUpdateVisitedHistory(view = view, url = url, isReload = isReload)
+          }
+        }
       }
     }
   }
@@ -93,11 +101,13 @@ class CustomWebView @JvmOverloads constructor(
   }
   //endregion
 
-  fun addEventHook(hook: IWebViewEventHook) {
-    this.eventHooks.add(hook)
+  //region IWebViewEventHookRegistry
+  override fun registerEventHook(eventHook: IWebViewEventHook) {
+    this.eventHooks.add(eventHook)
   }
 
-  fun removeEventHook(hook: IWebViewEventHook) {
-    this.eventHooks.remove(hook)
+  override fun unregisterEventHook(eventHook: IWebViewEventHook) {
+    this.eventHooks.remove(eventHook)
   }
+  //endregion
 }

@@ -5,12 +5,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebView
 import androidx.fragment.app.Fragment
 import com.google.gson.Gson
 import com.swiften.templateapp.webviewcentric.databinding.MainFragmentBinding
 import com.swiften.templateapp.webviewcentric.webview.AppJavascriptInterface
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
+import com.swiften.webview.IWebViewEventHook
+import com.swiften.webview.NoopWebViewEventHook
 import com.swiften.webview.SharedPreferencesJavascriptInterface
 import org.swiften.redux.core.*
 import org.swiften.redux.ui.*
@@ -21,7 +24,8 @@ class MainFragment : Fragment(),
   ILoggable,
   IPropContainer<MainFragment.State, MainFragment.Action>,
   IUniqueIDProvider by DefaultUniqueIDProvider(),
-  IVetoableSubRouter
+  IVetoableSubRouter,
+  IWebViewEventHook by NoopWebViewEventHook
 {
   companion object : IPropMapper<Redux.State, IDependency, State, Action> {
     val DefaultState = State()
@@ -30,6 +34,7 @@ class MainFragment : Fragment(),
       return Action(
         registerSubRouter = { dispatch(NestedRouter.Screen.RegisterSubRouter(it)) },
         unregisterSubRouter = { dispatch(NestedRouter.Screen.UnregisterSubRouter(it)) },
+        updateCurrentURL = { dispatch(Redux.Action.MainFragment.UpdateCurrentURL(it)) }
       )
     }
 
@@ -42,11 +47,12 @@ class MainFragment : Fragment(),
     val sharedPreferences: SharedPreferences
   }
 
-  data class State(val noop: Boolean = true) : Serializable
+  data class State(val currentURL: String = "file:///android_asset/index.html") : Serializable
 
   class Action(
     val registerSubRouter: (IVetoableSubRouter) -> Unit,
-    val unregisterSubRouter: (IVetoableSubRouter) -> Unit
+    val unregisterSubRouter: (IVetoableSubRouter) -> Unit,
+    val updateCurrentURL: (String) -> Unit,
   )
 
   private lateinit var bridgeRequestProcessor: BridgeRequestProcessor
@@ -55,6 +61,7 @@ class MainFragment : Fragment(),
   override var reduxProp by ObservableReduxProp<State, Action> { _, next ->
     if (next.firstTime) {
       next.action.registerSubRouter(this)
+      this.binding.customWebview.loadUrl(url = next.state.currentURL)
     }
   }
   //endregion
@@ -69,6 +76,7 @@ class MainFragment : Fragment(),
     this.binding.customWebview.let {
       it.javascriptInterfaces = arrayListOf(
         AppJavascriptInterface(
+          name = "AppModule",
           argsParser = sp.outProp.jsArgsParser,
           requestProcessor = bridgeRequestProcessor,
         ),
@@ -80,8 +88,8 @@ class MainFragment : Fragment(),
         ),
       )
 
+      it.registerEventHook(eventHook = this@MainFragment)
       this.binding.customWebview.initialize()
-      it.loadUrl("file:///android_asset/index.html")
     }
   }
 
@@ -107,6 +115,12 @@ class MainFragment : Fragment(),
       }
       else -> NavigationResult.Fallthrough
     }
+  }
+  //endregion
+
+  //region IWebViewEventHook
+  override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+    url?.also { this.reduxProp.action.updateCurrentURL(it) }
   }
   //endregion
 

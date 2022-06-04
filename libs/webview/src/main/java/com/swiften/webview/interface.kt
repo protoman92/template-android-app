@@ -57,7 +57,11 @@ interface IJavascriptInterface : IGenericLifecycleOwner {
   val name: String
 }
 
-interface IWebView : IGenericLifecycleOwner, IJavascriptEvaluator {
+interface IWebView :
+  IGenericLifecycleOwner,
+  IJavascriptEvaluator,
+  IWebViewEventHookRegistry
+{
   var javascriptInterfaces: List<IJavascriptInterface>
 
   fun canGoBack(): Boolean
@@ -67,12 +71,6 @@ interface IWebView : IGenericLifecycleOwner, IJavascriptEvaluator {
   fun loadUrl(url: String)
 
   fun reload()
-}
-
-interface IWebViewEventHook {
-  fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?)
-
-  fun onPageFinished(view: WebView?, url: String?)
 }
 
 data class BridgeMethodArguments<Parameters>(

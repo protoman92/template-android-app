@@ -13,7 +13,7 @@ import org.swiften.redux.core.FinalStore
 import org.swiften.redux.core.NestedRouter
 import org.swiften.redux.core.RouterMiddleware
 import org.swiften.redux.core.applyMiddlewares
-import org.swiften.redux.saga.common.SagaMiddleware
+import org.swiften.redux.saga.SagaMiddleware
 import org.swiften.redux.ui.IPropInjector
 
 class MainApplication : Application(),

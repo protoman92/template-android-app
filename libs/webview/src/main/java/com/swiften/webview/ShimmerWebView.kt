@@ -34,10 +34,12 @@ class ShimmerWebView @JvmOverloads constructor(
 
   //region IGenericLifecycleOwner
   override fun initialize() {
+    this.webview.registerEventHook(this)
     this.webview.initialize()
   }
 
   override fun deinitialize() {
+    this.webview.unregisterEventHook(this)
     this.webview.deinitialize()
   }
   //endregion
@@ -103,13 +105,13 @@ class ShimmerWebView @JvmOverloads constructor(
   }
   //endregion
 
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
-    this.webview.addEventHook(hook = this)
+  //region IWebViewEventHookRegistry
+  override fun registerEventHook(eventHook: IWebViewEventHook) {
+    this.webview.registerEventHook(eventHook)
   }
 
-  override fun onDetachedFromWindow() {
-    super.onDetachedFromWindow()
-    this.webview.removeEventHook(hook = this)
+  override fun unregisterEventHook(eventHook: IWebViewEventHook) {
+    this.webview.unregisterEventHook(eventHook)
   }
+  //endregion
 }
