@@ -4,7 +4,7 @@ import androidx.activity.result.ActivityResultLauncher
 
 /** Mimics the functionalities of an [ActivityResultLauncher] */
 interface IActivityResultLauncher<I, O> {
-  fun launch(input: I, eventHooks: IActivityResultEventHooks<I, O>)
+  fun launch(input: I, eventHook: IActivityResultEventHook<I, O>)
 
   fun unregister()
 }

@@ -17,33 +17,33 @@ import java.util.concurrent.Semaphore
  */
 class ActivityResultRegistry(private val fragment: Fragment) :
   IActivityResultRegistry,
-  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
   private val executor: ExecutorService = Executors.newSingleThreadExecutor()
 
   //region IActivityResultRegistry
   override fun <I, O> registerForActivityResult(): IActivityResultLauncher<I, O> {
-    var eventHooksRef: IActivityResultEventHooks<I, O>? = null
+    var eventHookRef: IActivityResultEventHook<I, O>? = null
     val semaphore = Semaphore(1)
 
     val launcher = this@ActivityResultRegistry.fragment
       .registerForActivityResult(object : ActivityResultContract<I, O>() {
         override fun createIntent(context: Context, input: I): Intent {
-          return requireNotNull(eventHooksRef)
+          return requireNotNull(eventHookRef)
             .createIntent(context = context, input = input)
         }
 
         override fun parseResult(resultCode: Int, intent: Intent?): O {
-          return requireNotNull(eventHooksRef)
+          return requireNotNull(eventHookRef)
             .parseResult(resultCode = resultCode, intent = intent)
         }
       }) { result ->
-        requireNotNull(eventHooksRef).onActivityResult(output = result)
+        requireNotNull(eventHookRef).onActivityResult(output = result)
         semaphore.release()
       }
 
     return object : IActivityResultLauncher<I, O> {
-      override fun launch(input: I, eventHooks: IActivityResultEventHooks<I, O>) {
+      override fun launch(input: I, eventHook: IActivityResultEventHook<I, O>) {
         this@ActivityResultRegistry.executor.submit {
           /**
            * Ensure launch calls are always sequential. In practice, this is likely not an issue
@@ -51,7 +51,7 @@ class ActivityResultRegistry(private val fragment: Fragment) :
            * else until they have completed the activity result flow).
            */
           semaphore.acquire()
-          eventHooksRef = eventHooks
+          eventHookRef = eventHook
           launcher.launch(input)
         }
       }

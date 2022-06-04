@@ -11,7 +11,7 @@ class WebViewJavascriptInterface(
   private val requestProcessor: IBridgeRequestProcessor,
   private val webView: IWebView,
 ) : IJavascriptInterface,
-  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
   @JavascriptInterface
   fun goBack(rawRequest: String) {

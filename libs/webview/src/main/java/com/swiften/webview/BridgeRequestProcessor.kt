@@ -15,7 +15,7 @@ class BridgeRequestProcessor(
   private val javascriptEvaluator: IJavascriptEvaluator,
   private val scheduler: Scheduler = Schedulers.computation()
 ) : IBridgeRequestProcessor,
-  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
   sealed class StreamEventResult(val event: String) {
     object Terminated : StreamEventResult(event = "STREAM_TERMINATED")

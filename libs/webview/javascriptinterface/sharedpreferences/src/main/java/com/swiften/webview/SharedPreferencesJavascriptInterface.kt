@@ -14,7 +14,7 @@ class SharedPreferencesJavascriptInterface(
   private val requestProcessor: IBridgeRequestProcessor,
   private val sharedPreferences: SharedPreferences,
 ) : IJavascriptInterface,
-  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
   sealed class MethodArguments {
     data class GetString(val key: String) : MethodArguments()

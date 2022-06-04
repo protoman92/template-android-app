@@ -1,6 +1,6 @@
 package com.swiften.commonview
 
-class NoopGenericLifecycleOwner : IGenericLifecycleOwner {
+object NoopGenericLifecycleOwner : IGenericLifecycleOwner {
   override fun initialize() {}
 
   override fun deinitialize() {}

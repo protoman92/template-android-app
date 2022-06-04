@@ -17,7 +17,7 @@ class NotificationJavascriptInterface(
   private val parentView: View,
   private val requestProcessor: IBridgeRequestProcessor
 ) : IJavascriptInterface,
-  IGenericLifecycleOwner by NoopGenericLifecycleOwner()
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
   sealed class MethodArguments {
     data class ShowNotification(

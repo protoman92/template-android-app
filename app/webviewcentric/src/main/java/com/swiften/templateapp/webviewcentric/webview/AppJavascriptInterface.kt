@@ -1,6 +1,8 @@
 package com.swiften.templateapp.webviewcentric.webview
 
 import android.webkit.JavascriptInterface
+import com.swiften.commonview.IGenericLifecycleOwner
+import com.swiften.commonview.NoopGenericLifecycleOwner
 import com.swiften.templateapp.webviewcentric.ILoggable
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.IBridgeRequestProcessor
@@ -10,17 +12,16 @@ import io.reactivex.Flowable
 import java.util.concurrent.TimeUnit
 
 class AppJavascriptInterface (
+  override val name: String,
   val argsParser: BridgeMethodArgumentsParser,
   val requestProcessor: IBridgeRequestProcessor,
 ) : ILoggable,
-  IJavascriptInterface {
+  IJavascriptInterface,
+  IGenericLifecycleOwner by NoopGenericLifecycleOwner
+{
   data class CreateTestStreamArgs(val intervalMs: Long)
 
   data class CreateTestStreamResult(val progress: Long)
-
-  //region IJavascriptInterface
-  override val name get() = "AppModule"
-  //endregion
 
   @JavascriptInterface
   fun createTestStream(rawArgs: String) {
