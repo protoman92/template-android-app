@@ -47,7 +47,7 @@ class MainFragment : Fragment(),
     val sharedPreferences: SharedPreferences
   }
 
-  data class State(val currentURL: String = "file:///android_asset/index.html") : Serializable
+  data class State(val currentURL: String = BuildConfig.WEB_APP_URL) : Serializable
 
   class Action(
     val registerSubRouter: (IVetoableSubRouter) -> Unit,
