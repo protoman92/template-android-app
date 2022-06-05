@@ -82,6 +82,7 @@ configure(arrayListOf(
 )) {
   dependencies {
     val implementation by configurations
+    implementation("androidx.fragment:fragment-ktx:${project.extra["fragmentKtx"]}")
 
     implementation(project(":libs:commonview"))
     implementation(project(":libs:webview"))

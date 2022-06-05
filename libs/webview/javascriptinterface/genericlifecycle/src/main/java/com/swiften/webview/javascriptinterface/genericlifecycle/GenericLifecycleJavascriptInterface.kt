@@ -1,8 +1,13 @@
-package com.swiften.webview
+package com.swiften.webview.javascriptinterface.genericlifecycle
 
 import android.webkit.JavascriptInterface
 import com.swiften.commonview.IGenericLifecycleOwner
 import com.swiften.commonview.NoopGenericLifecycleOwner
+import com.swiften.webview.BridgeMethodArgumentsParser
+import com.swiften.webview.BridgeRequestProcessor
+import com.swiften.webview.IJavascriptInterface
+import com.swiften.webview.parseArguments
+import com.swiften.webview.processStream
 import io.reactivex.subjects.PublishSubject
 
 class GenericLifecycleJavascriptInterface(
@@ -42,7 +47,6 @@ class GenericLifecycleJavascriptInterface(
   @JavascriptInterface
   fun observeDeinitialize(rawRequest: String) {
     val request = this.argsParser.parseArguments<Unit>(rawRequest)
-
 
     this.requestProcessor.processStream(
       stream = this.lifecycleEventSubject.filter { it is LifecycleEvent.Deinitialize },

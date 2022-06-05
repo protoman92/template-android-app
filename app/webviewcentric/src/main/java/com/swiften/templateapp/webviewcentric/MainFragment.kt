@@ -12,10 +12,10 @@ import com.swiften.templateapp.webviewcentric.databinding.MainFragmentBinding
 import com.swiften.templateapp.webviewcentric.webview.AppJavascriptInterface
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
-import com.swiften.webview.GenericLifecycleJavascriptInterface
+import com.swiften.webview.javascriptinterface.genericlifecycle.GenericLifecycleJavascriptInterface
 import com.swiften.webview.IWebViewEventHook
 import com.swiften.webview.NoopWebViewEventHook
-import com.swiften.webview.SharedPreferencesJavascriptInterface
+import com.swiften.webview.javascriptinterface.sharedpreferences.SharedPreferencesJavascriptInterface
 import org.swiften.redux.core.*
 import org.swiften.redux.ui.*
 import java.io.Serializable

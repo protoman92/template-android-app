@@ -3,6 +3,7 @@ package com.swiften.commonview.activityresult
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.swiften.commonview.IGenericLifecycleOwner
 import com.swiften.commonview.NoopGenericLifecycleOwner

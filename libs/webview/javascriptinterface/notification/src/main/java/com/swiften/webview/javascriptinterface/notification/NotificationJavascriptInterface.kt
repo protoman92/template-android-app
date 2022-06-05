@@ -1,4 +1,4 @@
-package com.swiften.webview
+package com.swiften.webview.javascriptinterface.notification
 
 import android.os.Handler
 import android.view.Gravity
@@ -8,8 +8,12 @@ import android.widget.TextView
 import com.google.android.material.snackbar.Snackbar
 import com.swiften.commonview.IGenericLifecycleOwner
 import com.swiften.commonview.NoopGenericLifecycleOwner
+import com.swiften.webview.BridgeMethodArgumentsParser
+import com.swiften.webview.IBridgeRequestProcessor
+import com.swiften.webview.IJavascriptInterface
+import com.swiften.webview.parseArguments
+import com.swiften.webview.processStream
 import io.reactivex.Completable
-import io.reactivex.Single
 
 class NotificationJavascriptInterface(
   override val name: String,

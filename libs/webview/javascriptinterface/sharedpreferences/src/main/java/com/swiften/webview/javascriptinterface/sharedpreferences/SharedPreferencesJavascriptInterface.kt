@@ -1,9 +1,14 @@
-package com.swiften.webview
+package com.swiften.webview.javascriptinterface.sharedpreferences
 
 import android.content.SharedPreferences
 import android.webkit.JavascriptInterface
 import com.swiften.commonview.IGenericLifecycleOwner
 import com.swiften.commonview.NoopGenericLifecycleOwner
+import com.swiften.webview.BridgeMethodArgumentsParser
+import com.swiften.webview.IBridgeRequestProcessor
+import com.swiften.webview.IJavascriptInterface
+import com.swiften.webview.parseArguments
+import com.swiften.webview.processStream
 import io.reactivex.Single
 import io.reactivex.subjects.BehaviorSubject
 import java.lang.Exception
@@ -60,13 +65,18 @@ class SharedPreferencesJavascriptInterface(
     val args = this.argsParser.parseArguments<MethodArguments.SetString>(rawArgs = rawArgs)
 
     val stream = Single.defer {
-      val didSucceed = this.sharedPreferences.edit().putString(args.parameters.key, args.parameters.value).commit()
+      val didSucceed = this.sharedPreferences.edit()
+        .putString(args.parameters.key, args.parameters.value)
+        .commit()
 
       if (didSucceed) {
         this.stringSubject.onNext(args.parameters)
         Single.just(null)
       } else {
-        Single.error(UnableToSetStringValueError(key = args.parameters.key, value = args.parameters.value))
+        Single.error(UnableToSetStringValueError(
+          key = args.parameters.key,
+          value = args.parameters.value,
+        ))
       }
     }
 
