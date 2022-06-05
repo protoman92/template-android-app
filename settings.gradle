@@ -4,14 +4,15 @@ dependencyResolutionManagement {
   repositories {
     google()
     mavenCentral()
-    maven { url 'https://jitpack.io' }
+    maven { url "https://jitpack.io" }
   }
 }
 
 rootProject.name = "TemplateApp"
-include ':app'
-include ':app:webviewcentric'
-include ':libs:commonview'
-include ':libs:webview'
-include ':libs:webview:javascriptinterface:notification'
-include ':libs:webview:javascriptinterface:sharedpreferences'
+include ":app"
+include ":app:webviewcentric"
+include ":libs:commonview"
+include ":libs:webview"
+include ":libs:webview:javascriptinterface:filepicker"
+include ":libs:webview:javascriptinterface:notification"
+include ":libs:webview:javascriptinterface:sharedpreferences"
