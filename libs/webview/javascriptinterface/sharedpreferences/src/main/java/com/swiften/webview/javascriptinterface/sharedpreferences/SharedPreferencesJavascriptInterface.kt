@@ -9,6 +9,7 @@ import com.swiften.webview.IBridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
 import com.swiften.webview.processStream
+import io.reactivex.Completable
 import io.reactivex.Single
 import io.reactivex.subjects.BehaviorSubject
 import java.lang.Exception
@@ -64,16 +65,16 @@ class SharedPreferencesJavascriptInterface(
   fun setString(rawArgs: String) {
     val args = this.argsParser.parseArguments<MethodArguments.SetString>(rawArgs = rawArgs)
 
-    val stream = Single.defer {
+    val stream = Completable.defer {
       val didSucceed = this.sharedPreferences.edit()
         .putString(args.parameters.key, args.parameters.value)
         .commit()
 
       if (didSucceed) {
         this.stringSubject.onNext(args.parameters)
-        Single.just(null)
+        Completable.complete()
       } else {
-        Single.error(UnableToSetStringValueError(
+        Completable.error(UnableToSetStringValueError(
           key = args.parameters.key,
           value = args.parameters.value,
         ))
