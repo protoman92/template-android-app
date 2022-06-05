@@ -12,6 +12,7 @@ import com.swiften.templateapp.webviewcentric.databinding.MainFragmentBinding
 import com.swiften.templateapp.webviewcentric.webview.AppJavascriptInterface
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
+import com.swiften.webview.GenericLifecycleJavascriptInterface
 import com.swiften.webview.IWebViewEventHook
 import com.swiften.webview.NoopWebViewEventHook
 import com.swiften.webview.SharedPreferencesJavascriptInterface
@@ -77,6 +78,11 @@ class MainFragment : Fragment(),
       it.javascriptInterfaces = arrayListOf(
         AppJavascriptInterface(
           name = "AppModule",
+          argsParser = sp.outProp.jsArgsParser,
+          requestProcessor = bridgeRequestProcessor,
+        ),
+        GenericLifecycleJavascriptInterface(
+          name = "GenericLifecycleModule",
           argsParser = sp.outProp.jsArgsParser,
           requestProcessor = bridgeRequestProcessor,
         ),

@@ -75,6 +75,8 @@ dependencies {
 
   implementation(project(":libs:commonview"))
   implementation(project(":libs:webview"))
+  implementation(project(":libs:webview:javascriptinterface:filepicker"))
+  implementation(project(":libs:webview:javascriptinterface:genericlifecycle"))
   implementation(project(":libs:webview:javascriptinterface:notification"))
   implementation(project(":libs:webview:javascriptinterface:sharedpreferences"))
 }
