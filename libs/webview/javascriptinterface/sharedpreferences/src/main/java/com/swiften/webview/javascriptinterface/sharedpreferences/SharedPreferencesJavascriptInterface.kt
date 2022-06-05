@@ -42,20 +42,37 @@ class SharedPreferencesJavascriptInterface(
   fun getString(rawArgs: String) {
     val args = this.argsParser.parseArguments<MethodArguments.GetString>(rawArgs = rawArgs)
 
-    val stream = Single.defer {
-      val value = this.sharedPreferences.getString(args.parameters.key, null)
-      Single.just(MethodResult.GetString(value = value))
-    }
+    this.requestProcessor.processStream(
+      stream = Single.defer {
+        val value = this@SharedPreferencesJavascriptInterface.sharedPreferences
+          .getString(args.parameters.key, null)
 
-    this.requestProcessor.processStream(stream = stream, bridgeArguments = args)
+        Single.just(MethodResult.GetString(value = value))
+      },
+      bridgeArguments = args,
+    )
+  }
+
+  @JavascriptInterface
+  fun getAll(rawArgs: String) {
+    val args = this.argsParser.parseArguments<Unit>(rawArgs = rawArgs)
+
+    this.requestProcessor.processStream(
+      stream = Single.defer {
+        Single.just(this@SharedPreferencesJavascriptInterface.sharedPreferences.all)
+      },
+      bridgeArguments = args,
+    )
   }
 
   @JavascriptInterface
   fun observeString(rawArgs: String) {
     val args = this.argsParser.parseArguments<MethodArguments.GetString>(rawArgs = rawArgs)
-    val startingValue = this.sharedPreferences.getString(args.parameters.key, null)
 
-    val stream = this.stringSubject
+    val startingValue = this@SharedPreferencesJavascriptInterface.sharedPreferences
+      .getString(args.parameters.key, null)
+
+    val stream = this@SharedPreferencesJavascriptInterface.stringSubject
       .startWith(MethodArguments.SetString(key = args.parameters.key, value = startingValue))
 
     this.requestProcessor.processStream(stream = stream, bridgeArguments = args)
@@ -66,12 +83,13 @@ class SharedPreferencesJavascriptInterface(
     val args = this.argsParser.parseArguments<MethodArguments.SetString>(rawArgs = rawArgs)
 
     val stream = Completable.defer {
-      val didSucceed = this.sharedPreferences.edit()
+      val didSucceed = this@SharedPreferencesJavascriptInterface.sharedPreferences
+        .edit()
         .putString(args.parameters.key, args.parameters.value)
         .commit()
 
       if (didSucceed) {
-        this.stringSubject.onNext(args.parameters)
+        this@SharedPreferencesJavascriptInterface.stringSubject.onNext(args.parameters)
         Completable.complete()
       } else {
         Completable.error(UnableToSetStringValueError(
