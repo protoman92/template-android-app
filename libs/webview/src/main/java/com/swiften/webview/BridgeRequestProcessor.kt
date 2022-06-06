@@ -85,7 +85,6 @@ class BridgeRequestProcessor(
     }
 
     disposable = stream
-//      .subscribeOn(this.scheduler)
       .observeOn(this.scheduler)
       .subscribe(
         { sendResultIfCallbackAvailable(it, null) },

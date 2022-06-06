@@ -25,12 +25,18 @@ class SharedPreferencesJavascriptInterface(
   sealed class MethodArguments {
     data class GetString(val key: String) : MethodArguments()
 
+    data class RemoveString(val key: String) : MethodArguments()
+
     data class SetString(val key: String, val value: String?) : MethodArguments()
   }
 
   sealed class MethodResult {
     data class GetString(val value: String?) : MethodResult()
   }
+
+  data class UnableToRemoveStringValueError(val key: String) : Exception(
+    "Unable to remove key \"$key\""
+  )
 
   data class UnableToSetStringValueError(val key: String, val value: String?) : Exception(
     "Unable to set value \"$value\" for key \"$key\""
@@ -74,6 +80,28 @@ class SharedPreferencesJavascriptInterface(
 
     val stream = this@SharedPreferencesJavascriptInterface.stringSubject
       .startWith(MethodArguments.SetString(key = args.parameters.key, value = startingValue))
+
+    this.requestProcessor.processStream(stream = stream, bridgeArguments = args)
+  }
+
+  @JavascriptInterface
+  fun removeString(rawArgs: String) {
+    val args = this.argsParser.parseArguments<MethodArguments.RemoveString>(rawArgs = rawArgs)
+
+    val stream = Completable.defer {
+      val didSucceed = this@SharedPreferencesJavascriptInterface.sharedPreferences
+        .edit()
+        .remove(args.parameters.key)
+        .commit()
+
+      if (didSucceed) {
+        Completable.complete()
+      } else {
+        Completable.error(UnableToRemoveStringValueError(
+          key = args.parameters.key,
+        ))
+      }
+    }
 
     this.requestProcessor.processStream(stream = stream, bridgeArguments = args)
   }
