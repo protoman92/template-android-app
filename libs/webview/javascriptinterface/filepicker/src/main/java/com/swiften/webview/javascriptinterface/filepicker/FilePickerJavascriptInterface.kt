@@ -15,7 +15,7 @@ import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
 import com.swiften.webview.processStream
 import io.reactivex.Completable
-import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.Single
 import java.util.concurrent.atomic.AtomicReference
 
 class FilePickerJavascriptInterface(
@@ -56,10 +56,9 @@ class FilePickerJavascriptInterface(
      * recreated again once the file-picking is complete. Thus, it might not be possible to have the
      * file result be delivered to the web in one [pickFile] call.
      *
-     * The web app should thus listen to the [pickFileResultSubject] for file results using
-     * [observePickFileResult].
+     * The web app should thus get the latest file-picking result using [activePickFileResult].
      */
-    internal val pickFileResultSubject = BehaviorSubject.create<MethodResult.PickFile>()
+    internal val activePickFileResult = AtomicReference(PickFileOutput.NOOP)
   }
 
   sealed class MethodArguments {
@@ -69,7 +68,11 @@ class FilePickerJavascriptInterface(
   }
 
   sealed class MethodResult {
-    data class PickFile(val requestID: String, val uri: String?) : MethodResult()
+    data class PickFile(val requestID: String, val uri: String?) : MethodResult() {
+      companion object {
+        internal val NOOP = PickFile(requestID = REQUEST_ID_NOOP, uri = null)
+      }
+    }
   }
 
   companion object {
@@ -77,12 +80,13 @@ class FilePickerJavascriptInterface(
   }
 
   @JavascriptInterface
-  fun observePickFileResult(rawRequest: String) {
+  fun getLatestPickFileResult(rawRequest: String) {
     val request = this.argsParser.parseArguments<MethodArguments.ObservePickFileResult>(rawRequest)
 
     this.requestProcessor.processStream(
-      stream = this.persistentState.pickFileResultSubject.filter {
-        it.requestID == request.parameters.requestID
+      stream = Single.defer {
+        Single.just(this@FilePickerJavascriptInterface.persistentState
+          .activePickFileResult.getAndSet(PickFileOutput.NOOP))
       },
       bridgeArguments = request,
     )
@@ -110,17 +114,17 @@ class FilePickerJavascriptInterface(
               val uri = intent?.dataString
 
               if (resultCode == Activity.RESULT_OK && uri != null) {
-                return MethodResult.PickFile(
+                return PickFileOutput(
                   requestID = this@FilePickerJavascriptInterface.persistentState.activeRequestID.get(),
                   uri = uri,
                 )
               }
 
-              return MethodResult.PickFile(requestID = REQUEST_ID_NOOP, uri = null)
+              return PickFileOutput.NOOP
             }
 
             override fun onActivityResult(output: PickFileOutput) {
-              this@FilePickerJavascriptInterface.persistentState.pickFileResultSubject.onNext(output)
+              this@FilePickerJavascriptInterface.persistentState.activePickFileResult.set(output)
             }
           },
         )
