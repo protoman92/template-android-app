@@ -59,6 +59,10 @@ class ShimmerWebView @JvmOverloads constructor(
     this.webview.evaluateJavascript(script = script, resultCallback = resultCallback)
   }
 
+  override fun getUrl(): String? {
+    return this.webview.url
+  }
+
   override fun goBack() {
     this.webview.goBack()
   }

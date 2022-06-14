@@ -64,6 +64,8 @@ interface IWebView :
 
   fun canGoBack(): Boolean
 
+  fun getUrl(): String?
+
   fun goBack()
 
   fun loadUrl(url: String)
