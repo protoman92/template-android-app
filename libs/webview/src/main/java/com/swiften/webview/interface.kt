@@ -1,9 +1,7 @@
 package com.swiften.webview
 
-import android.graphics.Bitmap
 import android.webkit.ValueCallback
-import android.webkit.WebView
-import com.swiften.commonview.IGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Completable
 import io.reactivex.Flowable

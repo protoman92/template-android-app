@@ -1,4 +1,4 @@
-package com.swiften.commonview
+package com.swiften.commonview.genericlifecycle
 
 object NoopGenericLifecycleOwner : IGenericLifecycleOwner {
   override fun initialize() {}

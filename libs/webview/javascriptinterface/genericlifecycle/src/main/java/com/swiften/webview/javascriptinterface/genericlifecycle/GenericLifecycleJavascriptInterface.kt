@@ -1,14 +1,14 @@
 package com.swiften.webview.javascriptinterface.genericlifecycle
 
 import android.webkit.JavascriptInterface
-import com.swiften.commonview.IGenericLifecycleOwner
-import com.swiften.commonview.NoopGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
 import com.swiften.webview.processStream
-import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.BehaviorSubject
 
 class GenericLifecycleJavascriptInterface(
   override val name: String,
@@ -19,10 +19,11 @@ class GenericLifecycleJavascriptInterface(
 {
   sealed class LifecycleEvent {
     object Initialize : LifecycleEvent()
+
     object Deinitialize : LifecycleEvent()
   }
 
-  private val lifecycleEventSubject = PublishSubject.create<LifecycleEvent>()
+  private val lifecycleEventSubject = BehaviorSubject.create<LifecycleEvent>()
 
   //region IGenericLifecycleOwner
   override fun initialize() {

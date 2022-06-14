@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.webkit.JavascriptInterface
 import androidx.fragment.app.Fragment
-import com.swiften.commonview.IGenericLifecycleOwner
-import com.swiften.commonview.NoopGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
 import com.swiften.commonview.activityresult.IActivityResultEventHook
 import com.swiften.commonview.activityresult.IActivityResultLauncher
 import com.swiften.webview.BridgeMethodArgumentsParser

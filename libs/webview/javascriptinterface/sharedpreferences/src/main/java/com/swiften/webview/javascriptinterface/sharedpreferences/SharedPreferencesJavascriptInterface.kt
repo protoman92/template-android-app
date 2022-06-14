@@ -2,8 +2,8 @@ package com.swiften.webview.javascriptinterface.sharedpreferences
 
 import android.content.SharedPreferences
 import android.webkit.JavascriptInterface
-import com.swiften.commonview.IGenericLifecycleOwner
-import com.swiften.commonview.NoopGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.IBridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface

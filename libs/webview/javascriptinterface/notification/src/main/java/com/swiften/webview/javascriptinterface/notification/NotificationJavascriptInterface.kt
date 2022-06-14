@@ -6,8 +6,8 @@ import android.view.View
 import android.webkit.JavascriptInterface
 import android.widget.TextView
 import com.google.android.material.snackbar.Snackbar
-import com.swiften.commonview.IGenericLifecycleOwner
-import com.swiften.commonview.NoopGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.IBridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface

@@ -1,8 +1,8 @@
 package com.swiften.webview
 
 import com.google.gson.Gson
-import com.swiften.commonview.IGenericLifecycleOwner
-import com.swiften.commonview.NoopGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.disposables.CompositeDisposable
@@ -13,7 +13,7 @@ import java.util.concurrent.Semaphore
 class BridgeRequestProcessor(
   private val gson: Gson,
   private val javascriptEvaluator: IJavascriptEvaluator,
-  private val scheduler: Scheduler = Schedulers.computation()
+  private val scheduler: Scheduler = Schedulers.computation(),
 ) : IBridgeRequestProcessor,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
