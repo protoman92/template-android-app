@@ -7,13 +7,12 @@ import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
-import com.swiften.webview.processStream
-import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.processors.PublishProcessor
 
 class GenericLifecycleJavascriptInterface(
   override val name: String,
-  private val argsParser: BridgeMethodArgumentsParser,
-  private val requestProcessor: BridgeRequestProcessor,
+  private val argsParser: Lazy<BridgeMethodArgumentsParser>,
+  private val requestProcessor: Lazy<BridgeRequestProcessor>,
 ) : IJavascriptInterface,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
@@ -23,34 +22,34 @@ class GenericLifecycleJavascriptInterface(
     object Deinitialize : LifecycleEvent()
   }
 
-  private val lifecycleEventSubject = BehaviorSubject.create<LifecycleEvent>()
+  private val lifecycleEventProcessor = PublishProcessor.create<LifecycleEvent>()
 
   //region IGenericLifecycleOwner
   override fun initialize() {
-    this.lifecycleEventSubject.onNext(LifecycleEvent.Initialize)
+    this.lifecycleEventProcessor.onNext(LifecycleEvent.Initialize)
   }
 
   override fun deinitialize() {
-    this.lifecycleEventSubject.onNext(LifecycleEvent.Deinitialize)
+    this.lifecycleEventProcessor.onNext(LifecycleEvent.Deinitialize)
   }
   //endregion
 
   @JavascriptInterface
   fun observeInitialize(rawRequest: String) {
-    val request = this.argsParser.parseArguments<Unit>(rawRequest)
+    val request = this.argsParser.value.parseArguments<Unit>(rawRequest)
 
-    this.requestProcessor.processStream(
-      stream = this.lifecycleEventSubject.filter { it is LifecycleEvent.Initialize },
+    this.requestProcessor.value.processStream(
+      stream = this.lifecycleEventProcessor.filter { it is LifecycleEvent.Initialize },
       bridgeArguments = request,
     )
   }
 
   @JavascriptInterface
   fun observeDeinitialize(rawRequest: String) {
-    val request = this.argsParser.parseArguments<Unit>(rawRequest)
+    val request = this.argsParser.value.parseArguments<Unit>(rawRequest)
 
-    this.requestProcessor.processStream(
-      stream = this.lifecycleEventSubject.filter { it is LifecycleEvent.Deinitialize },
+    this.requestProcessor.value.processStream(
+      stream = this.lifecycleEventProcessor.filter { it is LifecycleEvent.Deinitialize },
       bridgeArguments = request,
     )
   }

@@ -1,8 +1,11 @@
 package com.swiften.webview
 
+import androidx.lifecycle.Lifecycle
 import com.google.gson.Gson
 import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
 import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.ILifecycleStreamObserver
+import com.swiften.commonview.utils.LazyProperty
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.disposables.CompositeDisposable
@@ -11,8 +14,9 @@ import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.Semaphore
 
 class BridgeRequestProcessor(
-  private val gson: Gson,
-  private val javascriptEvaluator: IJavascriptEvaluator,
+  private val gson: Lazy<Gson>,
+  private val javascriptEvaluator: Lazy<IJavascriptEvaluator>,
+  private val lifecycleStreamObserver: Lazy<ILifecycleStreamObserver>,
   private val scheduler: Scheduler = Schedulers.computation(),
 ) : IBridgeRequestProcessor,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
@@ -41,7 +45,7 @@ class BridgeRequestProcessor(
     var result = false
 
     this.ensureSynchronous { done ->
-      this.javascriptEvaluator
+      this.javascriptEvaluator.value
         .evaluateJavascript(script = """javascript:typeof window.$callback == "function"""") {
           result = it == "true"
           done()
@@ -53,14 +57,15 @@ class BridgeRequestProcessor(
 
   private fun <Result> sendResponseToCallback(callback: String, response: StreamResponse<Result>) {
     this.ensureSynchronous { done ->
-      val jsonResponse = this.gson.toJson(response)
+      val jsonResponse = this.gson.value.toJson(response)
 
       val scriptToExecute = arrayListOf(
         """if (typeof window.$callback !== "function") {throw new Error("window.$callback does not exist") }""",
         "window.$callback($jsonResponse)"
       ).joinToString(";")
 
-      this.javascriptEvaluator.evaluateJavascript(script = "javascript:$scriptToExecute") { done() }
+      this.javascriptEvaluator.value
+        .evaluateJavascript(script = "javascript:$scriptToExecute") { done() }
     }
   }
 

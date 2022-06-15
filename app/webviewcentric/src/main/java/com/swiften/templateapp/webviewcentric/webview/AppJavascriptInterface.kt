@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit
 
 class AppJavascriptInterface (
   override val name: String,
-  val argsParser: BridgeMethodArgumentsParser,
-  val requestProcessor: IBridgeRequestProcessor,
+  val argsParser: Lazy<BridgeMethodArgumentsParser>,
+  val requestProcessor: Lazy<IBridgeRequestProcessor>,
 ) : ILoggable,
   IJavascriptInterface,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
@@ -25,13 +25,13 @@ class AppJavascriptInterface (
 
   @JavascriptInterface
   fun createTestStream(rawArgs: String) {
-    val args = this.argsParser.parseArguments<CreateTestStreamArgs>(rawArgs = rawArgs)
+    val args = this.argsParser.value.parseArguments<CreateTestStreamArgs>(rawArgs = rawArgs)
 
     val stream = Flowable
       .interval(args.parameters.intervalMs, TimeUnit.MILLISECONDS)
       .map { CreateTestStreamResult(progress = it + 1) }
       .take(100)
 
-    this.requestProcessor.processStream(stream = stream, bridgeArguments = args)
+    this.requestProcessor.value.processStream(stream = stream, bridgeArguments = args)
   }
 }

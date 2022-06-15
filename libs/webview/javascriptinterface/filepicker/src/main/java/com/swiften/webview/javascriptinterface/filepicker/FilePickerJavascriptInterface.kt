@@ -9,6 +9,7 @@ import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
 import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
 import com.swiften.commonview.activityresult.IActivityResultEventHook
 import com.swiften.commonview.activityresult.IActivityResultLauncher
+import com.swiften.commonview.utils.LazyProperty
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface
@@ -16,51 +17,18 @@ import com.swiften.webview.parseArguments
 import com.swiften.webview.processStream
 import io.reactivex.Completable
 import io.reactivex.Single
+import io.reactivex.processors.BehaviorProcessor
+import io.reactivex.processors.PublishProcessor
 import java.util.concurrent.atomic.AtomicReference
 
 class FilePickerJavascriptInterface(
   override val name: String,
-  private val activityResultLauncher: IActivityResultLauncher<PickFileInput, PickFileOutput>,
-  private val argsParser: BridgeMethodArgumentsParser,
-  private val requestProcessor: BridgeRequestProcessor,
-  private val persistentState: PersistentState = PersistentState.create()
+  private val activityResultLauncher: Lazy<IActivityResultLauncher<PickFileInput, PickFileOutput>>,
+  private val argsParser: Lazy<BridgeMethodArgumentsParser>,
+  private val requestProcessor: Lazy<BridgeRequestProcessor>,
 ) : IJavascriptInterface,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
-  /**
-   * Since the opening the file picker activity might lead to the recreation of
-   * [FilePickerJavascriptInterface], we might want to inject the [PersistentState] manually based
-   * on external conditions.
-   *
-   * For example, if we register [FilePickerJavascriptInterface] in [Fragment.onStart], and then
-   * call [Fragment.registerForActivityResult], when the user finishes picking a file,
-   * [IActivityResultEventHook.onActivityResult] is actually called before [Fragment.onStart] is
-   * called, resulting in the [FilePickerJavascriptInterface] being replaced shortly afterwards,
-   * thus losing its state up till then.
-   */
-  class PersistentState private constructor() {
-    companion object {
-      fun create(): PersistentState {
-        return PersistentState()
-      }
-    }
-
-    /**
-     * Practically, there can only be one active file-picking request at one time, since the
-     * file chooser [Intent] opens a system activity.
-     */
-    internal val activeRequestID = AtomicReference(REQUEST_ID_NOOP)
-
-    /**
-     * When we open the file picker activity, the current web view page will be destroyed and then
-     * recreated again once the file-picking is complete. Thus, it might not be possible to have the
-     * file result be delivered to the web in one [pickFile] call.
-     *
-     * The web app should thus get the latest file-picking result using [activePickFileResult].
-     */
-    internal val activePickFileResult = AtomicReference(PickFileOutput.NOOP)
-  }
-
   sealed class MethodArguments {
     data class ObservePickFileResult(val requestID: String) : MethodArguments()
 
@@ -79,29 +47,34 @@ class FilePickerJavascriptInterface(
     private const val REQUEST_ID_NOOP = (-1).toString()
   }
 
-  @JavascriptInterface
-  fun getLatestPickFileResult(rawRequest: String) {
-    val request = this.argsParser.parseArguments<MethodArguments.ObservePickFileResult>(rawRequest)
+  /**
+   * Practically, there can only be one active file-picking request at one time, since the
+   * file chooser [Intent] opens a system activity.
+   */
+  private val activeRequestID = AtomicReference(REQUEST_ID_NOOP)
 
-    this.requestProcessor.processStream(
-      stream = Single.defer {
-        Single.just(this@FilePickerJavascriptInterface.persistentState
-          .activePickFileResult.getAndSet(PickFileOutput.NOOP))
-      },
+  private val pickFileResultProcessor = PublishProcessor.create<PickFileOutput>()
+
+  @JavascriptInterface
+  fun observePickFileResult(rawRequest: String) {
+    val request = this.argsParser.value
+      .parseArguments<MethodArguments.ObservePickFileResult>(rawRequest)
+
+    this.requestProcessor.value.processStream(
+      stream = this@FilePickerJavascriptInterface.pickFileResultProcessor,
       bridgeArguments = request,
     )
   }
 
   @JavascriptInterface
   fun pickFile(rawRequest: String) {
-    val request = this.argsParser.parseArguments<MethodArguments.PickFile>(rawRequest)
+    val request = this.argsParser.value.parseArguments<MethodArguments.PickFile>(rawRequest)
 
-    this.requestProcessor.processStream(
+    this.requestProcessor.value.processStream(
       stream = Completable.defer {
-        this@FilePickerJavascriptInterface
-          .persistentState.activeRequestID.set(request.parameters.requestID)
+        this@FilePickerJavascriptInterface.activeRequestID.set(request.parameters.requestID)
 
-        activityResultLauncher.launch(
+        activityResultLauncher.value.launch(
           input = PickFileInput,
           eventHook = object : IActivityResultEventHook<PickFileInput, PickFileOutput> {
             override fun createIntent(context: Context, input: PickFileInput): Intent {
@@ -115,7 +88,7 @@ class FilePickerJavascriptInterface(
 
               if (resultCode == Activity.RESULT_OK && uri != null) {
                 return PickFileOutput(
-                  requestID = this@FilePickerJavascriptInterface.persistentState.activeRequestID.get(),
+                  requestID = this@FilePickerJavascriptInterface.activeRequestID.get(),
                   uri = uri,
                 )
               }
@@ -124,7 +97,7 @@ class FilePickerJavascriptInterface(
             }
 
             override fun onActivityResult(output: PickFileOutput) {
-              this@FilePickerJavascriptInterface.persistentState.activePickFileResult.set(output)
+              this@FilePickerJavascriptInterface.pickFileResultProcessor.onNext(output)
             }
           },
         )

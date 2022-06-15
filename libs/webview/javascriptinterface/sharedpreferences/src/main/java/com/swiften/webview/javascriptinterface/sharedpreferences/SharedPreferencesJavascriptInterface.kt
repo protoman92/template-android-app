@@ -11,14 +11,14 @@ import com.swiften.webview.parseArguments
 import com.swiften.webview.processStream
 import io.reactivex.Completable
 import io.reactivex.Single
-import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.processors.BehaviorProcessor
 import java.lang.Exception
 
 class SharedPreferencesJavascriptInterface(
   override val name: String,
-  private val argsParser: BridgeMethodArgumentsParser,
-  private val requestProcessor: IBridgeRequestProcessor,
-  private val sharedPreferences: SharedPreferences,
+  private val argsParser: Lazy<BridgeMethodArgumentsParser>,
+  private val requestProcessor: Lazy<IBridgeRequestProcessor>,
+  private val sharedPreferences: Lazy<SharedPreferences>,
 ) : IJavascriptInterface,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
@@ -42,15 +42,15 @@ class SharedPreferencesJavascriptInterface(
     "Unable to set value \"$value\" for key \"$key\""
   )
 
-  private val stringSubject = BehaviorSubject.create<MethodArguments.SetString>()
+  private val stringProcessor = BehaviorProcessor.create<MethodArguments.SetString>()
 
   @JavascriptInterface
   fun getString(rawArgs: String) {
-    val args = this.argsParser.parseArguments<MethodArguments.GetString>(rawArgs = rawArgs)
+    val args = this.argsParser.value.parseArguments<MethodArguments.GetString>(rawArgs = rawArgs)
 
-    this.requestProcessor.processStream(
+    this.requestProcessor.value.processStream(
       stream = Single.defer {
-        val value = this@SharedPreferencesJavascriptInterface.sharedPreferences
+        val value = this@SharedPreferencesJavascriptInterface.sharedPreferences.value
           .getString(args.parameters.key, null)
 
         Single.just(MethodResult.GetString(value = value))
@@ -61,11 +61,11 @@ class SharedPreferencesJavascriptInterface(
 
   @JavascriptInterface
   fun getAll(rawArgs: String) {
-    val args = this.argsParser.parseArguments<Unit>(rawArgs = rawArgs)
+    val args = this.argsParser.value.parseArguments<Unit>(rawArgs = rawArgs)
 
-    this.requestProcessor.processStream(
+    this.requestProcessor.value.processStream(
       stream = Single.defer {
-        Single.just(this@SharedPreferencesJavascriptInterface.sharedPreferences.all)
+        Single.just(this@SharedPreferencesJavascriptInterface.sharedPreferences.value.all)
       },
       bridgeArguments = args,
     )
@@ -73,23 +73,23 @@ class SharedPreferencesJavascriptInterface(
 
   @JavascriptInterface
   fun observeString(rawArgs: String) {
-    val args = this.argsParser.parseArguments<MethodArguments.GetString>(rawArgs = rawArgs)
+    val args = this.argsParser.value.parseArguments<MethodArguments.GetString>(rawArgs = rawArgs)
 
-    val startingValue = this@SharedPreferencesJavascriptInterface.sharedPreferences
+    val startingValue = this@SharedPreferencesJavascriptInterface.sharedPreferences.value
       .getString(args.parameters.key, null)
 
-    val stream = this@SharedPreferencesJavascriptInterface.stringSubject
+    val stream = this@SharedPreferencesJavascriptInterface.stringProcessor
       .startWith(MethodArguments.SetString(key = args.parameters.key, value = startingValue))
 
-    this.requestProcessor.processStream(stream = stream, bridgeArguments = args)
+    this.requestProcessor.value.processStream(stream = stream, bridgeArguments = args)
   }
 
   @JavascriptInterface
   fun removeString(rawArgs: String) {
-    val args = this.argsParser.parseArguments<MethodArguments.RemoveString>(rawArgs = rawArgs)
+    val args = this.argsParser.value.parseArguments<MethodArguments.RemoveString>(rawArgs = rawArgs)
 
     val stream = Completable.defer {
-      val didSucceed = this@SharedPreferencesJavascriptInterface.sharedPreferences
+      val didSucceed = this@SharedPreferencesJavascriptInterface.sharedPreferences.value
         .edit()
         .remove(args.parameters.key)
         .commit()
@@ -103,21 +103,21 @@ class SharedPreferencesJavascriptInterface(
       }
     }
 
-    this.requestProcessor.processStream(stream = stream, bridgeArguments = args)
+    this.requestProcessor.value.processStream(stream = stream, bridgeArguments = args)
   }
 
   @JavascriptInterface
   fun setString(rawArgs: String) {
-    val args = this.argsParser.parseArguments<MethodArguments.SetString>(rawArgs = rawArgs)
+    val args = this.argsParser.value.parseArguments<MethodArguments.SetString>(rawArgs = rawArgs)
 
     val stream = Completable.defer {
-      val didSucceed = this@SharedPreferencesJavascriptInterface.sharedPreferences
+      val didSucceed = this@SharedPreferencesJavascriptInterface.sharedPreferences.value
         .edit()
         .putString(args.parameters.key, args.parameters.value)
         .commit()
 
       if (didSucceed) {
-        this@SharedPreferencesJavascriptInterface.stringSubject.onNext(args.parameters)
+        this@SharedPreferencesJavascriptInterface.stringProcessor.onNext(args.parameters)
         Completable.complete()
       } else {
         Completable.error(UnableToSetStringValueError(
@@ -127,6 +127,6 @@ class SharedPreferencesJavascriptInterface(
       }
     }
 
-    this.requestProcessor.processStream(stream = stream, bridgeArguments = args)
+    this.requestProcessor.value.processStream(stream = stream, bridgeArguments = args)
   }
 }

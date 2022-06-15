@@ -17,9 +17,9 @@ import io.reactivex.Completable
 
 class NotificationJavascriptInterface(
   override val name: String,
-  private val argsParser: BridgeMethodArgumentsParser,
-  private val parentView: View,
-  private val requestProcessor: IBridgeRequestProcessor
+  private val argsParser: Lazy<BridgeMethodArgumentsParser>,
+  private val parentView: Lazy<View>,
+  private val requestProcessor: Lazy<IBridgeRequestProcessor>,
 ) : IJavascriptInterface,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
@@ -32,9 +32,10 @@ class NotificationJavascriptInterface(
 
   @JavascriptInterface
   fun showNotification(rawArgs: String) {
-    val args = this.argsParser.parseArguments<MethodArguments.ShowNotification>(rawArgs = rawArgs)
+    val args = this.argsParser.value
+      .parseArguments<MethodArguments.ShowNotification>(rawArgs = rawArgs)
 
-    this.requestProcessor.processStream(
+    this.requestProcessor.value.processStream(
       stream = Completable.defer {
         this@NotificationJavascriptInterface.showNotificationOnMainThread(args.parameters)
         Completable.complete()
@@ -44,10 +45,10 @@ class NotificationJavascriptInterface(
   }
 
   private fun showNotificationOnMainThread(args: MethodArguments.ShowNotification) {
-    val mainHandler = Handler(this.parentView.context.mainLooper);
+    val mainHandler = Handler(this.parentView.value.context.mainLooper);
 
     mainHandler.post {
-      val snackBar = Snackbar.make(this.parentView, args.message, args.durationMs,)
+      val snackBar = Snackbar.make(this.parentView.value, args.message, args.durationMs,)
       snackBar.show()
 
       snackBar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text).also {

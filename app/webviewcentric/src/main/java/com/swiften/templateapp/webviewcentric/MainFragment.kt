@@ -8,6 +8,9 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.fragment.app.Fragment
 import com.google.gson.Gson
+import com.swiften.commonview.lifecycle.LifecycleStreamObserver
+import com.swiften.commonview.utils.LazyProperty
+import com.swiften.commonview.utils.map
 import com.swiften.templateapp.webviewcentric.databinding.MainFragmentBinding
 import com.swiften.templateapp.webviewcentric.webview.AppJavascriptInterface
 import com.swiften.webview.BridgeMethodArgumentsParser
@@ -35,7 +38,7 @@ class MainFragment : Fragment(),
       return Action(
         registerSubRouter = { dispatch(NestedRouter.Screen.RegisterSubRouter(it)) },
         unregisterSubRouter = { dispatch(NestedRouter.Screen.UnregisterSubRouter(it)) },
-        updateCurrentURL = { dispatch(Redux.Action.MainFragment.UpdateCurrentURL(it)) }
+        updateCurrentURL = { dispatch(Redux.Action.MainFragment.UpdateCurrentURL(it)) },
       )
     }
 
@@ -58,50 +61,30 @@ class MainFragment : Fragment(),
 
   private lateinit var bridgeRequestProcessor: BridgeRequestProcessor
 
+  private val lifecycleStreamObserver: LifecycleStreamObserver by lazy {
+    LifecycleStreamObserver(lifecycleOwner = this)
+  }
+
+  private val lazyDependency: LazyProperty<IDependency> by lazy { LazyProperty() }
+
   //region IPropContainer
   override var reduxProp by ObservableReduxProp<State, Action> { _, next ->
     if (next.firstTime) {
       next.action.registerSubRouter(this)
-      this.binding.customWebview.loadUrl(url = next.state.currentURL)
+
+      if (this.binding.customWebview.getUrl() !== next.state.currentURL) {
+        this.binding.customWebview.loadUrl(url = next.state.currentURL)
+      }
     }
   }
   //endregion
 
   //region IPropLifecycleOwner
   override fun beforePropInjectionStarts(sp: StaticProp<Redux.State, IDependency>) {
-    bridgeRequestProcessor = BridgeRequestProcessor(
-      gson = sp.outProp.gson,
-      javascriptEvaluator = this.binding.customWebview
-    )
-
-    this.binding.customWebview.let {
-      it.javascriptInterfaces = arrayListOf(
-        AppJavascriptInterface(
-          name = "AppModule",
-          argsParser = sp.outProp.jsArgsParser,
-          requestProcessor = bridgeRequestProcessor,
-        ),
-        GenericLifecycleJavascriptInterface(
-          name = "GenericLifecycleModule",
-          argsParser = sp.outProp.jsArgsParser,
-          requestProcessor = bridgeRequestProcessor,
-        ),
-        SharedPreferencesJavascriptInterface(
-          name = "StorageModule",
-          argsParser = sp.outProp.jsArgsParser,
-          requestProcessor = bridgeRequestProcessor,
-          sharedPreferences = sp.outProp.sharedPreferences,
-        ),
-      )
-
-      it.registerEventHook(eventHook = this@MainFragment)
-      this.binding.customWebview.initialize()
-    }
+    this.lazyDependency.value = sp.outProp
   }
 
   override fun afterPropInjectionEnds(sp: StaticProp<Redux.State, IDependency>) {
-    this.binding.customWebview.deinitialize()
-    this.bridgeRequestProcessor.deinitialize()
     this.reduxProp.action.unregisterSubRouter(this)
   }
   //endregion
@@ -133,6 +116,11 @@ class MainFragment : Fragment(),
   private var _binding: MainFragmentBinding? = null
   private val binding get() = this._binding!!
 
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    this.lifecycleStreamObserver.initialize()
+  }
+
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
@@ -142,8 +130,47 @@ class MainFragment : Fragment(),
     return this.binding.root
   }
 
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+
+    this.bridgeRequestProcessor = BridgeRequestProcessor(
+      gson = lazyDependency.map { it.gson },
+      javascriptEvaluator = LazyProperty(initialValue = this.binding.customWebview),
+      lifecycleStreamObserver = LazyProperty(initialValue = this.lifecycleStreamObserver),
+    )
+
+    this.binding.customWebview.let { webview ->
+      webview.javascriptInterfaces = arrayListOf(
+        AppJavascriptInterface(
+          name = "AppModule",
+          argsParser = this.lazyDependency.map { it.jsArgsParser },
+          requestProcessor = LazyProperty(initialValue = bridgeRequestProcessor),
+        ),
+        GenericLifecycleJavascriptInterface(
+          name = "GenericLifecycleModule",
+          argsParser = this.lazyDependency.map { it.jsArgsParser },
+          requestProcessor = LazyProperty(initialValue = bridgeRequestProcessor),
+        ),
+        SharedPreferencesJavascriptInterface(
+          name = "StorageModule",
+          argsParser = this.lazyDependency.map { it.jsArgsParser },
+          requestProcessor = LazyProperty(initialValue = bridgeRequestProcessor),
+          sharedPreferences = this.lazyDependency.map { it.sharedPreferences },
+        ),
+      )
+
+      webview.registerEventHook(eventHook = this@MainFragment)
+      this.binding.customWebview.initialize()
+    }
+  }
+
   override fun onDestroyView() {
     super.onDestroyView()
     this._binding = null
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    this.lifecycleStreamObserver.deinitialize()
   }
 }
