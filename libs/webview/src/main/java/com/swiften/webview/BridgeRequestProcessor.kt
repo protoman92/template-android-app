@@ -1,11 +1,9 @@
 package com.swiften.webview
 
-import androidx.lifecycle.Lifecycle
 import com.google.gson.Gson
 import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
 import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
 import com.swiften.commonview.lifecycle.ILifecycleStreamObserver
-import com.swiften.commonview.utils.LazyProperty
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.disposables.CompositeDisposable
@@ -22,7 +20,7 @@ class BridgeRequestProcessor(
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
   sealed class StreamEventResult(val event: String) {
-    object Terminated : StreamEventResult(event = "STREAM_TERMINATED")
+    object Complete : StreamEventResult(event = "STREAM_COMPLETE")
   }
 
   data class StreamResponse<Result>(val result: Result?, val error: String?)
@@ -94,7 +92,7 @@ class BridgeRequestProcessor(
       .subscribe(
         { sendResultIfCallbackAvailable(it, null) },
         { sendResultIfCallbackAvailable(null, it.message) },
-        { sendResultIfCallbackAvailable(StreamEventResult.Terminated, null) }
+        { sendResultIfCallbackAvailable(StreamEventResult.Complete, null) }
       )
 
     compositeDisposable.add(disposable)
