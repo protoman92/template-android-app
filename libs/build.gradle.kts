@@ -78,6 +78,17 @@ configure(arrayListOf(
 }
 
 configure(arrayListOf(
+  project(":libs:webview:javascriptinterface:fileopener")
+)) {
+  dependencies {
+    val implementation by configurations
+
+    implementation(project(":libs:commonview"))
+    implementation(project(":libs:webview"))
+  }
+}
+
+configure(arrayListOf(
   project(":libs:webview:javascriptinterface:filepicker")
 )) {
   dependencies {
