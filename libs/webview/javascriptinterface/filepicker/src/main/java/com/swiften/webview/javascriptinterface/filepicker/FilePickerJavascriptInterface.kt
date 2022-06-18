@@ -7,10 +7,11 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.webkit.JavascriptInterface
 import android.webkit.MimeTypeMap
-import com.swiften.commonview.lifecycle.IGenericLifecycleOwner
-import com.swiften.commonview.lifecycle.NoopGenericLifecycleOwner
 import com.swiften.commonview.activity.IActivityResultEventHook
 import com.swiften.commonview.activity.IActivityResultLauncher
+import com.swiften.commonview.lifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.NoopGenericLifecycleOwner
+import com.swiften.commonview.permission.IPermissionRequester
 import com.swiften.commonview.utils.LazyProperty
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
@@ -27,6 +28,7 @@ class FilePickerJavascriptInterface(
   private val argsParser: Lazy<BridgeMethodArgumentsParser>,
   private val context: Lazy<Context>,
   private val mimeTypeMap: Lazy<MimeTypeMap> = LazyProperty(initialValue = MimeTypeMap.getSingleton()),
+  private val permissionRequester: Lazy<IPermissionRequester>,
   private val requestProcessor: Lazy<BridgeRequestProcessor>,
 ) : IJavascriptInterface,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
