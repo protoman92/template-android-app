@@ -1,8 +1,8 @@
 package com.swiften.webview.javascriptinterface.genericlifecycle
 
 import android.webkit.JavascriptInterface
-import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
-import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.NoopGenericLifecycleOwner
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface

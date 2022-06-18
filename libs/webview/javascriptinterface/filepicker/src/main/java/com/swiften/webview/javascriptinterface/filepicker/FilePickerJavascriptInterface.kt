@@ -7,10 +7,10 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.webkit.JavascriptInterface
 import android.webkit.MimeTypeMap
-import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
-import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
-import com.swiften.commonview.activityresult.IActivityResultEventHook
-import com.swiften.commonview.activityresult.IActivityResultLauncher
+import com.swiften.commonview.lifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.NoopGenericLifecycleOwner
+import com.swiften.commonview.activity.IActivityResultEventHook
+import com.swiften.commonview.activity.IActivityResultLauncher
 import com.swiften.commonview.utils.LazyProperty
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
@@ -64,8 +64,8 @@ class FilePickerJavascriptInterface(
   }
 
   /**
-   * Practically, there can only be one active file-picking request at one time, since the
-   * file chooser [Intent] opens a system activity.
+   * Practically, there can only be one active file-picking request at one time, since the file
+   * chooser [Intent] opens a system activity.
    */
   private val activeRequestID = AtomicReference(REQUEST_ID_NOOP)
 
@@ -90,7 +90,7 @@ class FilePickerJavascriptInterface(
       stream = Completable.defer {
         this@FilePickerJavascriptInterface.activeRequestID.set(request.parameters.requestID)
 
-        activityResultLauncher.value.launch(
+        this@FilePickerJavascriptInterface.activityResultLauncher.value.launch(
           input = PickFileInput,
           eventHook = object : IActivityResultEventHook<PickFileInput, PickFileOutput> {
             override fun createIntent(context: Context, input: PickFileInput): Intent {

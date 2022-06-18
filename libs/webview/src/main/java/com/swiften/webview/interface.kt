@@ -1,7 +1,7 @@
 package com.swiften.webview
 
 import android.webkit.ValueCallback
-import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.IGenericLifecycleOwner
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Completable
 import io.reactivex.Flowable

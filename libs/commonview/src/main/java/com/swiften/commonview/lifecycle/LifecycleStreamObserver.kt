@@ -3,7 +3,6 @@ package com.swiften.commonview.lifecycle
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
 import io.reactivex.Flowable
 import io.reactivex.processors.BehaviorProcessor
 

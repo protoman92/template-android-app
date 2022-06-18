@@ -1,4 +1,4 @@
-package com.swiften.commonview.activityresult
+package com.swiften.commonview.activity
 
 import android.content.Context
 import android.content.Intent

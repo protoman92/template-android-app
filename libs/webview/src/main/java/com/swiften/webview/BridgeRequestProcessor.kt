@@ -1,8 +1,8 @@
 package com.swiften.webview
 
 import com.google.gson.Gson
-import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
-import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.NoopGenericLifecycleOwner
 import com.swiften.commonview.lifecycle.ILifecycleStreamObserver
 import io.reactivex.Flowable
 import io.reactivex.Scheduler

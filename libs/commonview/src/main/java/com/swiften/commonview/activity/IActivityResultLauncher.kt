@@ -1,4 +1,4 @@
-package com.swiften.commonview.activityresult
+package com.swiften.commonview.activity
 
 import androidx.activity.result.ActivityResultLauncher
 

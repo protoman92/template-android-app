@@ -1,8 +1,8 @@
 package com.swiften.webview
 
 import android.webkit.JavascriptInterface
-import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
-import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.NoopGenericLifecycleOwner
 import io.reactivex.Single
 
 class WebViewJavascriptInterface(

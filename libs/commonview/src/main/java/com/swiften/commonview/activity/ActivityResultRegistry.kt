@@ -1,11 +1,11 @@
-package com.swiften.commonview.activityresult
+package com.swiften.commonview.activity
 
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.fragment.app.Fragment
-import com.swiften.commonview.genericlifecycle.IGenericLifecycleOwner
-import com.swiften.commonview.genericlifecycle.NoopGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.IGenericLifecycleOwner
+import com.swiften.commonview.lifecycle.NoopGenericLifecycleOwner
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Semaphore
