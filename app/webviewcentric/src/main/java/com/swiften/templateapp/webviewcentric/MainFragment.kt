@@ -8,22 +8,44 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.fragment.app.Fragment
 import com.google.gson.Gson
+import com.swiften.commonview.activity.ActivityResultRegistry
+import com.swiften.commonview.activity.IActivityResultLauncher
+import com.swiften.commonview.activity.IActivityStarter
 import com.swiften.commonview.lifecycle.LifecycleStreamObserver
+import com.swiften.commonview.permission.PermissionRequester
 import com.swiften.commonview.utils.LazyProperty
 import com.swiften.commonview.utils.map
 import com.swiften.templateapp.webviewcentric.databinding.MainFragmentBinding
 import com.swiften.templateapp.webviewcentric.webview.AppJavascriptInterface
 import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.BridgeRequestProcessor
-import com.swiften.webview.javascriptinterface.genericlifecycle.GenericLifecycleJavascriptInterface
 import com.swiften.webview.IWebViewEventHook
 import com.swiften.webview.NoopWebViewEventHook
+import com.swiften.webview.WebViewJavascriptInterface
+import com.swiften.webview.javascriptinterface.fileopener.FileOpenerJavascriptInterface
+import com.swiften.webview.javascriptinterface.filepicker.FilePickerJavascriptInterface
+import com.swiften.webview.javascriptinterface.filepicker.PickFileInput
+import com.swiften.webview.javascriptinterface.filepicker.PickFileOutput
+import com.swiften.webview.javascriptinterface.genericlifecycle.GenericLifecycleJavascriptInterface
+import com.swiften.webview.javascriptinterface.notification.NotificationJavascriptInterface
 import com.swiften.webview.javascriptinterface.sharedpreferences.SharedPreferencesJavascriptInterface
-import org.swiften.redux.core.*
-import org.swiften.redux.ui.*
+import org.swiften.redux.core.DefaultUniqueIDProvider
+import org.swiften.redux.core.IActionDispatcher
+import org.swiften.redux.core.IRouterScreen
+import org.swiften.redux.core.IUniqueIDProvider
+import org.swiften.redux.core.IVetoableSubRouter
+import org.swiften.redux.core.NavigationResult
+import org.swiften.redux.core.NestedRouter
+import org.swiften.redux.ui.IPropContainer
+import org.swiften.redux.ui.IPropLifecycleOwner
+import org.swiften.redux.ui.IPropMapper
+import org.swiften.redux.ui.NoopPropLifecycleOwner
+import org.swiften.redux.ui.ObservableReduxProp
+import org.swiften.redux.ui.StaticProp
 import java.io.Serializable
 
 class MainFragment : Fragment(),
+  IActivityStarter,
   IPropLifecycleOwner<Redux.State, MainFragment.IDependency> by NoopPropLifecycleOwner(),
   ILoggable,
   IPropContainer<MainFragment.State, MainFragment.Action>,
@@ -59,20 +81,30 @@ class MainFragment : Fragment(),
     val updateCurrentURL: (String) -> Unit,
   )
 
-  private lateinit var bridgeRequestProcessor: BridgeRequestProcessor
+  private val activityResultRegistry: ActivityResultRegistry
+  private val filePickerLauncher: IActivityResultLauncher<PickFileInput, PickFileOutput>
+  private val requestPermissionLauncher: IActivityResultLauncher<String, Boolean>
 
   private val lifecycleStreamObserver: LifecycleStreamObserver by lazy {
     LifecycleStreamObserver(lifecycleOwner = this)
   }
 
-  private val lazyDependency: LazyProperty<IDependency> by lazy { LazyProperty() }
+  private lateinit var bridgeRequestProcessor: BridgeRequestProcessor
+  private val lazyDependency: LazyProperty<IDependency>
+
+  init {
+    this.activityResultRegistry = ActivityResultRegistry(fragment = this)
+    this.filePickerLauncher = this.activityResultRegistry.registerForActivityResult()
+    this.requestPermissionLauncher = this.activityResultRegistry.registerForActivityResult()
+    this.lazyDependency = LazyProperty()
+  }
 
   //region IPropContainer
   override var reduxProp by ObservableReduxProp<State, Action> { _, next ->
     if (next.firstTime) {
       next.action.registerSubRouter(this)
 
-      if (this.binding.customWebview.getUrl() !== next.state.currentURL) {
+      if (this.binding.customWebview.getUrl() != next.state.currentURL) {
         this.binding.customWebview.loadUrl(url = next.state.currentURL)
       }
     }
@@ -124,7 +156,7 @@ class MainFragment : Fragment(),
   override fun onCreateView(
     inflater: LayoutInflater,
     container: ViewGroup?,
-    savedInstanceState: Bundle?
+    savedInstanceState: Bundle?,
   ): View {
     this._binding = MainFragmentBinding.inflate(inflater, container, false)
     return this.binding.root
@@ -134,43 +166,81 @@ class MainFragment : Fragment(),
     super.onViewCreated(view, savedInstanceState)
 
     this.bridgeRequestProcessor = BridgeRequestProcessor(
-      gson = lazyDependency.map { it.gson },
+      gson = this.lazyDependency.map { it.gson },
       javascriptEvaluator = LazyProperty(initialValue = this.binding.customWebview),
       lifecycleStreamObserver = LazyProperty(initialValue = this.lifecycleStreamObserver),
     )
 
     this.binding.customWebview.let { webview ->
+      val lazyJsArgsParser = this.lazyDependency.map { it.jsArgsParser }
+      val lazyRequestProcessor = LazyProperty(initialValue = bridgeRequestProcessor)
+
+      val permissionRequester = PermissionRequester(
+        activity = this.requireActivity(),
+        activityResultLauncher = this.requestPermissionLauncher,
+      )
+
       webview.javascriptInterfaces = arrayListOf(
         AppJavascriptInterface(
           name = "AppModule",
-          argsParser = this.lazyDependency.map { it.jsArgsParser },
-          requestProcessor = LazyProperty(initialValue = bridgeRequestProcessor),
+          argsParser = lazyJsArgsParser,
+          requestProcessor = lazyRequestProcessor,
+        ),
+        FileOpenerJavascriptInterface(
+          name = "FileOpenerModule",
+          activityStarter = LazyProperty(initialValue = this),
+          argsParser = lazyJsArgsParser,
+          requestProcessor = lazyRequestProcessor,
+        ),
+        FilePickerJavascriptInterface(
+          name = "FilePickerModule",
+          activityResultLauncher = LazyProperty(initialValue = this.filePickerLauncher),
+          argsParser = lazyJsArgsParser,
+          context = LazyProperty(initialValue = this.context),
+          permissionRequester = LazyProperty(initialValue = permissionRequester),
+          requestProcessor = lazyRequestProcessor,
         ),
         GenericLifecycleJavascriptInterface(
           name = "GenericLifecycleModule",
-          argsParser = this.lazyDependency.map { it.jsArgsParser },
-          requestProcessor = LazyProperty(initialValue = bridgeRequestProcessor),
+          argsParser = lazyJsArgsParser,
+          requestProcessor = lazyRequestProcessor,
+        ),
+        NotificationJavascriptInterface(
+          name = "NotificationModule",
+          argsParser = lazyJsArgsParser,
+          parentView = LazyProperty(initialValue = webview),
+          requestProcessor = lazyRequestProcessor,
         ),
         SharedPreferencesJavascriptInterface(
-          name = "StorageModule",
-          argsParser = this.lazyDependency.map { it.jsArgsParser },
-          requestProcessor = LazyProperty(initialValue = bridgeRequestProcessor),
+          name = "LightStorageModule",
+          argsParser = lazyJsArgsParser,
+          requestProcessor = lazyRequestProcessor,
           sharedPreferences = this.lazyDependency.map { it.sharedPreferences },
+        ),
+        WebViewJavascriptInterface(
+          name = "WebViewModule",
+          argsParser = lazyJsArgsParser,
+          requestProcessor = lazyRequestProcessor,
+          webView = LazyProperty(initialValue = webview),
         ),
       )
 
       webview.registerEventHook(eventHook = this@MainFragment)
-      this.binding.customWebview.initialize()
+      webview.initialize()
     }
   }
 
   override fun onDestroyView() {
     super.onDestroyView()
+    this.binding.customWebview.deinitialize()
+    this.bridgeRequestProcessor.deinitialize()
     this._binding = null
   }
 
   override fun onDestroy() {
     super.onDestroy()
+    this.activityResultRegistry.deinitialize()
+    this.filePickerLauncher.unregister()
     this.lifecycleStreamObserver.deinitialize()
   }
 }
