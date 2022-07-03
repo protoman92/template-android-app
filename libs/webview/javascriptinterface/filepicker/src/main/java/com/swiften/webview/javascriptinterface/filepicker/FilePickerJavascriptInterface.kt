@@ -20,7 +20,7 @@ import com.swiften.webview.BridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
 import com.swiften.webview.processStream
-import io.reactivex.Single
+import io.reactivex.Maybe
 import io.reactivex.processors.PublishProcessor
 import java.io.File
 import java.io.FileNotFoundException
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 class FilePickerJavascriptInterface(
   override val name: String,
-  private val activityResultLauncher: Lazy<IActivityResultLauncher<PickFileInput, PickFileOutput>>,
+  private val activityResultLauncher: Lazy<IActivityResultLauncher<PickFileInput, PickFileOutput?>>,
   private val argsParser: Lazy<BridgeMethodArgumentsParser>,
   private val context: Lazy<Context>,
   private val mimeTypeMap: Lazy<MimeTypeMap> = LazyProperty(initialValue = MimeTypeMap.getSingleton()),
@@ -39,22 +39,26 @@ class FilePickerJavascriptInterface(
   /**
    * If this is true, save selected files to the app's internal storage, and then expose its URI.
    * https://commonsware.com/blog/2016/03/15/how-consume-content-uri.html
+   *
+   * URIs acquired view [Intent.ACTION_GET_CONTENT] are short-lived, so it's best to set this to
+   * true to save them for long-term access:
+   * https://stackoverflow.com/questions/48187647/exception-java-lang-securityexception-reading-mediadocumentsprovider-requ
    */
   private val saveToInternalStorage: Boolean = true,
 ) : IJavascriptInterface,
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
-  sealed class MethodArguments {
-    data class ObservePickFileResult(val requestID: String) : MethodArguments()
+  sealed interface MethodArguments {
+    data class ObservePickFileResult(val requestID: String) : MethodArguments
 
     data class PickFile(
       val message: String,
       val mimeType: String?,
       val requestID: String,
-    ) : MethodArguments()
+    ) : MethodArguments
   }
 
-  sealed class MethodResult {
+  sealed interface MethodResult {
     data class PickFile(
       val requestID: String,
       val extension: String?,
@@ -62,29 +66,14 @@ class FilePickerJavascriptInterface(
       val name: String?,
       val size: Long?,
       val uri: String?,
-    ) : MethodResult() {
-      companion object {
-        internal val NOOP = PickFile(
-          requestID = REQUEST_ID_NOOP,
-          extension = null,
-          mimeType = null,
-          name = null,
-          size = null,
-          uri = null,
-        )
-      }
-    }
-  }
-
-  companion object {
-    private const val REQUEST_ID_NOOP = (-1).toString()
+    ) : MethodResult
   }
 
   /**
    * Practically, there can only be one active file-picking request at one time, since the file
    * chooser [Intent] opens a system activity.
    */
-  private val activeRequestID = AtomicReference(REQUEST_ID_NOOP)
+  private val activeRequestID = AtomicReference<String?>(null)
 
   private val pickFileResultProcessor = PublishProcessor.create<PickFileOutput>()
 
@@ -104,19 +93,19 @@ class FilePickerJavascriptInterface(
     val request = this.argsParser.value.parseArguments<MethodArguments.PickFile>(rawRequest)
 
     this.requestProcessor.value.processStream(
-      stream = Single.create<PickFileOutput> { emitter ->
+      stream = Maybe.create<PickFileOutput> { emitter ->
         this@FilePickerJavascriptInterface.activeRequestID.set(request.parameters.requestID)
 
         this@FilePickerJavascriptInterface.activityResultLauncher.value.launch(
           input = PickFileInput,
-          eventHook = object : IActivityResultEventHook<PickFileInput, PickFileOutput> {
+          eventHook = object : IActivityResultEventHook<PickFileInput, PickFileOutput?> {
             override fun createIntent(context: Context, input: PickFileInput): Intent {
               val chooseFile = Intent(Intent.ACTION_GET_CONTENT)
               chooseFile.type = request.parameters.mimeType ?: "*/*"
               return Intent.createChooser(chooseFile, request.parameters.message)
             }
 
-            override fun parseResult(resultCode: Int, intent: Intent?): PickFileOutput {
+            override fun parseResult(resultCode: Int, intent: Intent?): PickFileOutput? {
               var contentCursor: Cursor? = null
               var inputStream: InputStream? = null
               var outputStream: OutputStream? = null
@@ -177,7 +166,7 @@ class FilePickerJavascriptInterface(
                   }
 
                   return PickFileOutput(
-                    requestID = this@FilePickerJavascriptInterface.activeRequestID.get(),
+                    requestID = requireNotNull(this@FilePickerJavascriptInterface.activeRequestID.get()),
                     extension = extension,
                     mimeType = mimeType,
                     name = fileName,
@@ -193,10 +182,15 @@ class FilePickerJavascriptInterface(
                 }
               }
 
-              return PickFileOutput.NOOP
+              return null
             }
 
-            override fun onActivityResult(output: PickFileOutput) {
+            override fun onActivityResult(output: PickFileOutput?) {
+              if (output == null) {
+                emitter.onComplete()
+                return
+              }
+
               emitter.onSuccess(output)
             }
           },

@@ -23,9 +23,8 @@ import com.swiften.webview.IWebViewEventHook
 import com.swiften.webview.NoopWebViewEventHook
 import com.swiften.webview.WebViewJavascriptInterface
 import com.swiften.webview.javascriptinterface.fileopener.FileOpenerJavascriptInterface
+import com.swiften.webview.javascriptinterface.filepicker.FilePickerActivityResultLauncher
 import com.swiften.webview.javascriptinterface.filepicker.FilePickerJavascriptInterface
-import com.swiften.webview.javascriptinterface.filepicker.PickFileInput
-import com.swiften.webview.javascriptinterface.filepicker.PickFileOutput
 import com.swiften.webview.javascriptinterface.genericlifecycle.GenericLifecycleJavascriptInterface
 import com.swiften.webview.javascriptinterface.notification.NotificationJavascriptInterface
 import com.swiften.webview.javascriptinterface.sharedpreferences.SharedPreferencesJavascriptInterface
@@ -82,7 +81,7 @@ class MainFragment : Fragment(),
   )
 
   private val activityResultRegistry: ActivityResultRegistry
-  private val filePickerLauncher: IActivityResultLauncher<PickFileInput, PickFileOutput>
+  private val filePickerLauncher: FilePickerActivityResultLauncher
   private val requestPermissionLauncher: IActivityResultLauncher<String, Boolean>
 
   private val lifecycleStreamObserver: LifecycleStreamObserver by lazy {
@@ -172,6 +171,7 @@ class MainFragment : Fragment(),
     )
 
     this.binding.customWebview.let { webview ->
+      val lazyContext = LazyProperty(initialValue = this.context)
       val lazyJsArgsParser = this.lazyDependency.map { it.jsArgsParser }
       val lazyRequestProcessor = LazyProperty(initialValue = bridgeRequestProcessor)
 
@@ -190,13 +190,14 @@ class MainFragment : Fragment(),
           name = "FileOpenerModule",
           activityStarter = LazyProperty(initialValue = this),
           argsParser = lazyJsArgsParser,
+          context = lazyContext,
           requestProcessor = lazyRequestProcessor,
         ),
         FilePickerJavascriptInterface(
           name = "FilePickerModule",
           activityResultLauncher = LazyProperty(initialValue = this.filePickerLauncher),
           argsParser = lazyJsArgsParser,
-          context = LazyProperty(initialValue = this.context),
+          context = lazyContext,
           permissionRequester = LazyProperty(initialValue = permissionRequester),
           requestProcessor = lazyRequestProcessor,
         ),
