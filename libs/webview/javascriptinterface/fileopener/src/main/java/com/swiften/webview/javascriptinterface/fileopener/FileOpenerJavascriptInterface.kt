@@ -132,13 +132,14 @@ class FileOpenerJavascriptInterface(
         } finally {
           inputStream?.close()
         }
-      }
+      }.subscribeOn(
         /**
          * Since we are reading contents from an input stream, we need to execute this from another
          * thread other than the main thread, otherwise it might block for a long time while reading
          * a large file.
          */
-        .subscribeOn(Schedulers.io()),
+        Schedulers.io()
+      ),
       bridgeArguments = request,
     )
   }

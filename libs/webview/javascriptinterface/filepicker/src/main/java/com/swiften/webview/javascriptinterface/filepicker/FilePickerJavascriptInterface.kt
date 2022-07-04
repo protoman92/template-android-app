@@ -21,7 +21,9 @@ import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
 import com.swiften.webview.processStream
 import io.reactivex.Maybe
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
+import io.reactivex.schedulers.Schedulers
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -65,7 +67,7 @@ class FilePickerJavascriptInterface(
       val mimeType: String?,
       val name: String?,
       val size: Long?,
-      val uri: String?,
+      val uri: String,
     ) : MethodResult
   }
 
@@ -107,13 +109,9 @@ class FilePickerJavascriptInterface(
 
             override fun parseResult(resultCode: Int, intent: Intent?): PickFileOutput? {
               var contentCursor: Cursor? = null
-              var inputStream: InputStream? = null
-              var outputStream: OutputStream? = null
               val rawUri = intent?.dataString
 
               if (resultCode == Activity.RESULT_OK && rawUri != null) {
-                val defaultErrorMessage = "$rawUri does not point to a valid content"
-
                 try {
                   val contentResolver = this@FilePickerJavascriptInterface.context.value.contentResolver
                   val uri = Uri.parse(rawUri)
@@ -143,42 +141,18 @@ class FilePickerJavascriptInterface(
                     fileSize = cursor.getLong(sizeIndex)
                   }
 
-                  var finalUri = rawUri
-
-                  if (this@FilePickerJavascriptInterface.saveToInternalStorage) {
-                    inputStream = contentResolver.openInputStream(uri)
-
-                    if (inputStream == null || fileName.isNullOrEmpty()) {
-                      throw FileNotFoundException(defaultErrorMessage)
-                    }
-
-                    outputStream = this@FilePickerJavascriptInterface.context.value
-                      .openFileOutput(fileName, Context.MODE_PRIVATE)
-
-                    CommonUtils.transferInputToOutput(source = inputStream, sink = outputStream)
-
-                    val internalStoragePath = arrayListOf(
-                      this@FilePickerJavascriptInterface.context.value.filesDir.absolutePath,
-                      fileName,
-                    ).joinToString(separator = File.separator)
-
-                    finalUri = Uri.fromFile(File(internalStoragePath)).toString()
-                  }
-
                   return PickFileOutput(
                     requestID = requireNotNull(this@FilePickerJavascriptInterface.activeRequestID.get()),
                     extension = extension,
                     mimeType = mimeType,
                     name = fileName,
                     size = fileSize,
-                    uri = finalUri,
+                    uri = rawUri,
                   )
                 } catch (error: Exception) {
                   emitter.onError(error)
                 } finally {
                   contentCursor?.close()
-                  inputStream?.close()
-                  outputStream?.close()
                 }
               }
 
@@ -195,7 +169,47 @@ class FilePickerJavascriptInterface(
             }
           },
         )
-      }.doOnSuccess {
+      }.observeOn(
+        /** Ensure io scheduler is used for copying file contents to internal storage */
+        Schedulers.io()
+      ).map { output ->
+        var inputStream: InputStream? = null
+        var outputStream: OutputStream? = null
+        var finalUri = output.uri
+
+        if (this@FilePickerJavascriptInterface.saveToInternalStorage) {
+          val contentResolver = this@FilePickerJavascriptInterface.context.value.contentResolver
+          val defaultErrorMessage = "${output.uri} does not point to a valid content"
+
+          try {
+            val uri = Uri.parse(output.uri)
+            inputStream = contentResolver.openInputStream(uri)
+
+            if (inputStream == null || output.name.isNullOrEmpty()) {
+              throw FileNotFoundException(defaultErrorMessage)
+            }
+
+            outputStream = this@FilePickerJavascriptInterface.context.value
+              .openFileOutput(output.name, Context.MODE_PRIVATE)
+
+            CommonUtils.transferInputToOutput(source = inputStream, sink = outputStream)
+
+            val internalStoragePath = arrayListOf(
+              this@FilePickerJavascriptInterface.context.value.filesDir.absolutePath,
+              output.name,
+            ).joinToString(separator = File.separator)
+
+            finalUri = Uri.fromFile(File(internalStoragePath)).toString()
+          } finally {
+            inputStream?.close()
+            outputStream?.close()
+          }
+        }
+
+        output.copy(uri = finalUri)
+      }.observeOn(
+        AndroidSchedulers.mainThread()
+      ).doOnSuccess {
         this@FilePickerJavascriptInterface.pickFileResultProcessor.onNext(it)
       }.ignoreElement(),
       bridgeArguments = request,
