@@ -15,7 +15,9 @@ import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
 import com.swiften.webview.processStream
 import io.reactivex.Completable
+import io.reactivex.Scheduler
 import io.reactivex.Single
+import io.reactivex.schedulers.Schedulers
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -130,7 +132,13 @@ class FileOpenerJavascriptInterface(
         } finally {
           inputStream?.close()
         }
-      },
+      }
+        /**
+         * Since we are reading contents from an input stream, we need to execute this from another
+         * thread other than the main thread, otherwise it might block for a long time while reading
+         * a large file.
+         */
+        .subscribeOn(Schedulers.io()),
       bridgeArguments = request,
     )
   }
