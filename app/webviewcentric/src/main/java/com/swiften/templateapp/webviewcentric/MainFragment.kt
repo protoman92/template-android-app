@@ -88,13 +88,14 @@ class MainFragment : Fragment(),
     LifecycleStreamObserver(lifecycleOwner = this)
   }
 
-  private lateinit var bridgeRequestProcessor: BridgeRequestProcessor
+  private val bridgeRequestProcessor: LazyProperty<BridgeRequestProcessor>
   private val lazyDependency: LazyProperty<IDependency>
 
   init {
     this.activityResultRegistry = ActivityResultRegistry(fragment = this)
     this.filePickerLauncher = this.activityResultRegistry.registerForActivityResult()
     this.requestPermissionLauncher = this.activityResultRegistry.registerForActivityResult()
+    this.bridgeRequestProcessor = LazyProperty()
     this.lazyDependency = LazyProperty()
   }
 
@@ -164,7 +165,7 @@ class MainFragment : Fragment(),
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
-    this.bridgeRequestProcessor = BridgeRequestProcessor(
+    this.bridgeRequestProcessor.value = BridgeRequestProcessor(
       gson = this.lazyDependency.map { it.gson },
       javascriptEvaluator = LazyProperty(initialValue = this.binding.customWebview),
       lifecycleStreamObserver = LazyProperty(initialValue = this.lifecycleStreamObserver),
@@ -173,7 +174,6 @@ class MainFragment : Fragment(),
     this.binding.customWebview.let { webview ->
       val lazyContext = LazyProperty(initialValue = this.context)
       val lazyJsArgsParser = this.lazyDependency.map { it.jsArgsParser }
-      val lazyRequestProcessor = LazyProperty(initialValue = bridgeRequestProcessor)
 
       val permissionRequester = PermissionRequester(
         activity = this.requireActivity(),
@@ -184,14 +184,14 @@ class MainFragment : Fragment(),
         AppJavascriptInterface(
           name = "AppModule",
           argsParser = lazyJsArgsParser,
-          requestProcessor = lazyRequestProcessor,
+          requestProcessor = this.bridgeRequestProcessor,
         ),
         FileOpenerJavascriptInterface(
           name = "FileOpenerModule",
           activityStarter = LazyProperty(initialValue = this),
           argsParser = lazyJsArgsParser,
           context = lazyContext,
-          requestProcessor = lazyRequestProcessor,
+          requestProcessor = this.bridgeRequestProcessor,
         ),
         FilePickerJavascriptInterface(
           name = "FilePickerModule",
@@ -199,29 +199,29 @@ class MainFragment : Fragment(),
           argsParser = lazyJsArgsParser,
           context = lazyContext,
           permissionRequester = LazyProperty(initialValue = permissionRequester),
-          requestProcessor = lazyRequestProcessor,
+          requestProcessor = this.bridgeRequestProcessor,
         ),
         GenericLifecycleJavascriptInterface(
           name = "GenericLifecycleModule",
           argsParser = lazyJsArgsParser,
-          requestProcessor = lazyRequestProcessor,
+          requestProcessor = this.bridgeRequestProcessor,
         ),
         NotificationJavascriptInterface(
           name = "NotificationModule",
           argsParser = lazyJsArgsParser,
           parentView = LazyProperty(initialValue = webview),
-          requestProcessor = lazyRequestProcessor,
+          requestProcessor = this.bridgeRequestProcessor,
         ),
         SharedPreferencesJavascriptInterface(
           name = "LightStorageModule",
           argsParser = lazyJsArgsParser,
-          requestProcessor = lazyRequestProcessor,
+          requestProcessor = this.bridgeRequestProcessor,
           sharedPreferences = this.lazyDependency.map { it.sharedPreferences },
         ),
         WebViewJavascriptInterface(
           name = "WebViewModule",
           argsParser = lazyJsArgsParser,
-          requestProcessor = lazyRequestProcessor,
+          requestProcessor = this.bridgeRequestProcessor,
           webView = LazyProperty(initialValue = webview),
         ),
       )
@@ -234,7 +234,7 @@ class MainFragment : Fragment(),
   override fun onDestroyView() {
     super.onDestroyView()
     this.binding.customWebview.deinitialize()
-    this.bridgeRequestProcessor.deinitialize()
+    this.bridgeRequestProcessor.value.deinitialize()
     this._binding = null
   }
 
