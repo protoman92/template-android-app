@@ -111,6 +111,17 @@ configure(arrayListOf(
   }
 }
 
+configure(arrayListOf(
+  project(":libs:webview:javascriptinterface:mediaplayer")
+)) {
+  dependencies {
+    val implementation by configurations
+    implementation("com.google.android.exoplayer:exoplayer:2.18.0")
+
+    implementation(project(":libs:commonview"))
+    implementation(project(":libs:webview"))
+  }
+}
 
 configure(arrayListOf(
   project(":libs:webview:javascriptinterface:notification")
