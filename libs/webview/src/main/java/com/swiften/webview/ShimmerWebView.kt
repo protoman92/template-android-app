@@ -87,8 +87,12 @@ class ShimmerWebView @JvmOverloads constructor(
       ?.alpha(1f)
       ?.setDuration(DURATION_ANIMATION_MS)
       ?.setListener(object : Animator.AnimatorListener by NoopAnimatorListener {
-        override fun onAnimationStart(anim: Animator?) {
+        override fun onAnimationStart(p0: Animator?) {
           view.visibility = View.VISIBLE
+        }
+
+        override fun onAnimationEnd(p0: Animator?) {
+          p0?.removeListener(this)
         }
       })
       ?.start()
@@ -98,7 +102,9 @@ class ShimmerWebView @JvmOverloads constructor(
       .alpha(0f)
       .setDuration(DURATION_ANIMATION_MS)
       .setListener(object : Animator.AnimatorListener by NoopAnimatorListener {
-        override fun onAnimationEnd(anim: Animator?) {
+        override fun onAnimationEnd(p0: Animator?) {
+          p0?.removeListener(this)
+
           this@ShimmerWebView.loadingContainer.also {
             it.stopShimmer()
             it.visibility = View.GONE
