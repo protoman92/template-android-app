@@ -55,24 +55,6 @@ interface IJavascriptInterface : IGenericLifecycleOwner {
   val name: String
 }
 
-interface IWebView :
-  IGenericLifecycleOwner,
-  IJavascriptEvaluator,
-  IWebViewEventHookRegistry
-{
-  var javascriptInterfaces: List<IJavascriptInterface>
-
-  fun canGoBack(): Boolean
-
-  fun getUrl(): String?
-
-  fun goBack()
-
-  fun loadUrl(url: String)
-
-  fun reload()
-}
-
 data class BridgeMethodArguments<Parameters>(
   val callback: String,
   val method: String,

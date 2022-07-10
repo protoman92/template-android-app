@@ -55,6 +55,14 @@ class ShimmerWebView @JvmOverloads constructor(
     return this.webview.canGoBack()
   }
 
+  override fun disableInteractions() {
+    this.webview.disableInteractions()
+  }
+
+  override fun enableInteractions() {
+    this.webview.enableInteractions()
+  }
+
   override fun evaluateJavascript(script: String, resultCallback: ValueCallback<String>?) {
     this.webview.evaluateJavascript(script = script, resultCallback = resultCallback)
   }
