@@ -68,7 +68,7 @@ class FileOpenerJavascriptInterface(
         if (
           this@FileOpenerJavascriptInterface.allowInsecureWorldReadable &&
           uri.scheme == "file" &&
-          rawUri.substring("file://".length).also {
+          rawUri.removePrefix("file://").also {
             uriWithoutScheme = it
           }.startsWith(internalStorageDir)
         ) {
