@@ -1,6 +1,15 @@
 package com.swiften.webview.javascriptinterface.mediaplayer
 
+import android.R.attr.bitmap
 import android.content.Context
+import android.graphics.Bitmap
+import android.media.ThumbnailUtils
+import android.net.Uri
+import android.os.Build
+import android.os.CancellationSignal
+import android.provider.MediaStore
+import android.util.Base64
+import android.util.Size
 import android.webkit.JavascriptInterface
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
@@ -12,9 +21,16 @@ import com.swiften.webview.BridgeMethodArgumentsParser
 import com.swiften.webview.IBridgeRequestProcessor
 import com.swiften.webview.IJavascriptInterface
 import com.swiften.webview.parseArguments
+import com.swiften.webview.processStream
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
+import io.reactivex.Maybe
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
+import java.io.ByteArrayOutputStream
+import java.io.File
+
 
 class MediaPlayerJavascriptInterface(
   override val name: String,
@@ -26,6 +42,12 @@ class MediaPlayerJavascriptInterface(
   IGenericLifecycleOwner by NoopGenericLifecycleOwner
 {
   sealed interface MethodArguments {
+    data class GenerateVideoThumbnail(
+      val height: Int,
+      val uri: String,
+      val width: Int,
+    ) : MethodArguments
+
     data class PlayMedia(val mimeType: String, val uri: String) : MethodArguments
   }
 
@@ -55,6 +77,55 @@ class MediaPlayerJavascriptInterface(
         }
       }
     }
+  }
+
+  @JavascriptInterface
+  fun generateVideoThumbnail(rawRequest: String) {
+    val request = this.argsParser.value.parseArguments<MethodArguments.GenerateVideoThumbnail>(rawRequest)
+
+    this.requestProcessor.value.processStream(
+      stream = Maybe.create<String> { emitter ->
+        /**
+         * The URI might be url-encoded, and thus to get the actual file name, we need to url-decode
+         * it.
+         */
+        val filePath = Uri.decode(request.parameters.uri).removePrefix("file://")
+        val file = File(filePath)
+        val cancellationSignal = CancellationSignal()
+        val size = Size(request.parameters.width, request.parameters.height)
+
+        emitter.setCancellable {
+          cancellationSignal.cancel()
+        }
+
+        try {
+          val base64EncodedBitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ThumbnailUtils.createVideoThumbnail(file, size, cancellationSignal)
+          } else {
+            ThumbnailUtils.createVideoThumbnail(
+              file.absolutePath,
+              MediaStore.Images.Thumbnails.MINI_KIND,
+            )
+          }?.let { bitmap ->
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+            val byteArray = byteArrayOutputStream.toByteArray()
+            Base64.encodeToString(byteArray, Base64.DEFAULT);
+          }
+
+          if (base64EncodedBitmap != null) {
+            emitter.onSuccess(base64EncodedBitmap)
+          } else {
+            emitter.onComplete()
+          }
+        } catch (error: Exception) {
+          emitter.onError(error)
+        }
+      }.subscribeOn(
+        Schedulers.io()
+      ),
+      bridgeArguments = request,
+    )
   }
 
   @JavascriptInterface
@@ -130,10 +201,9 @@ class MediaPlayerJavascriptInterface(
 
           emitter.setCancellable {
             /**
-             * Since the [IExoPlayerView.hide] call should be idempotent, we should be to call it
-             * multiple times without issues. In this case, it could be called twice if the current
-             * [Flowable] completes due to an outside [IExoPlayerView.hide] call, since we are
-             * calling [io.reactivex.Emitter.onComplete] from
+             * In this case, [IExoPlayerView.hide] could be called twice if the current [Flowable]
+             * completes due to an outside [IExoPlayerView.hide] call, since we are calling
+             * [io.reactivex.Emitter.onComplete] from
              * [IExoPlayerViewEventHooks.onExoPlayerViewHidden]. The timeline could look as follows:
              * - A [IExoPlayerView.hide] call is triggered from outside (e.g. via the user clicking
              *   the back button).

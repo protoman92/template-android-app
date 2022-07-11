@@ -28,6 +28,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.URLEncoder
 import java.util.concurrent.atomic.AtomicReference
 
 class FilePickerJavascriptInterface(
@@ -189,8 +190,10 @@ class FilePickerJavascriptInterface(
               throw FileNotFoundException(defaultErrorMessage)
             }
 
-            outputStream = this@FilePickerJavascriptInterface.context.value
-              .openFileOutput(output.name, Context.MODE_PRIVATE)
+            outputStream = this@FilePickerJavascriptInterface.context.value.openFileOutput(
+              output.name,
+              Context.MODE_PRIVATE,
+            )
 
             CommonUtils.transferInputToOutput(source = inputStream, sink = outputStream)
 
